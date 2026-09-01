@@ -1,0 +1,506 @@
+<!doctype html>
+<!-- Gavvas Astro Analyzer 1.2.0 · World Atlas raster edition -->
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gavvas Astro" />
+  <title>Gavvas Astro Analyzer</title>
+
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg:#050a12; --panel:#0b1422; --panel2:#101d2f; --line:#20304a;
+      --text:#f6f8fc; --muted:#93a4bd; --accent:#77a7ff; --good:#64d597;
+      --warn:#f0c76a; --bad:#ff7e7e; --radius:18px;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif}
+    body{padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 20px)}
+    .app{max-width:980px;margin:auto}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 4px 14px}
+    h1{font-size:22px;line-height:1.05;margin:0;letter-spacing:-.02em}
+    .sub{font-size:12px;color:var(--muted);margin-top:4px}
+    button,input{font:inherit}
+    button{border:0;color:var(--text);background:var(--panel2);border-radius:12px;padding:11px 13px;font-weight:700;cursor:pointer}
+    button:active{transform:scale(.98)}
+    .primary{background:var(--accent);color:#07111f}
+    .ghost{border:1px solid var(--line);background:transparent}
+    .iconBtn{width:44px;height:44px;padding:0;font-size:20px}
+    .card{background:linear-gradient(180deg,rgba(16,29,47,.98),rgba(9,17,29,.98));border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:0 12px 35px rgba(0,0,0,.22)}
+    .searchRow{display:grid;grid-template-columns:1fr auto;gap:8px}
+    input[type=search]{width:100%;border:1px solid var(--line);background:#07101c;color:var(--text);border-radius:13px;padding:13px 14px;outline:none;font-size:16px}
+    input[type=search]:focus{border-color:var(--accent)}
+    .results{display:none;margin-top:8px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#08121f}
+    .result{padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+    .result:last-child{border-bottom:0}.result small{display:block;color:var(--muted);margin-top:2px}
+    #map{height:310px;border-radius:15px;margin-top:12px;background:#0a1320}
+    .leaflet-control-attribution{font-size:9px!important}
+    .locationLine{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-top:12px}
+    .place{font-weight:800;font-size:18px}.coords{color:var(--muted);font-size:12px;margin-top:3px}
+    .flag{font-size:30px;line-height:1}
+    .status{font-size:12px;color:var(--muted);margin:8px 2px 0;min-height:16px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .metric{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;padding:11px;min-height:76px}
+    .metric .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+    .metric .value{font-size:20px;font-weight:800;margin-top:5px}.metric .small{font-size:12px;color:var(--muted);margin-top:4px}
+    .sectionTitle{display:flex;justify-content:space-between;align-items:center;margin:0 2px 10px}
+    .sectionTitle h2{font-size:15px;margin:0}.sectionTitle span{font-size:11px;color:var(--muted)}
+    .scoreWrap{display:grid;grid-template-columns:86px 1fr;gap:12px;align-items:center}
+    .score{width:82px;height:82px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--score)*1%),#26364f 0);position:relative}
+    .score:after{content:"";position:absolute;inset:8px;background:#0d1928;border-radius:50%}.score strong{z-index:1;font-size:24px}.scoreText b{font-size:16px}.scoreText div{color:var(--muted);font-size:12px;margin-top:5px;line-height:1.35}
+    .hourly{display:grid;grid-auto-flow:column;grid-auto-columns:134px;gap:8px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity}
+    .hour{scroll-snap-align:start;border:1px solid var(--line);border-radius:14px;padding:10px;background:rgba(255,255,255,.03)}
+    .hour .time{font-weight:800}.hour .date{font-size:10px;color:var(--muted);margin-bottom:8px}.row{display:flex;justify-content:space-between;gap:7px;font-size:11px;margin:5px 0}.row span:first-child{color:var(--muted)}
+    .favList{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}.fav{white-space:nowrap;border:1px solid var(--line);background:#0a1524;border-radius:999px;padding:9px 11px;font-size:12px;cursor:pointer}.fav .x{margin-left:7px;color:var(--muted)}
+    .issGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.issItem{font-size:12px;color:var(--muted)}.issItem b{display:block;color:var(--text);font-size:16px;margin-top:2px}
+    details{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}summary{cursor:pointer;font-weight:700;font-size:13px}.settings{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}.settings input[type=file]{width:100%;margin-top:8px;color:var(--text)}
+    .pill{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.good{background:rgba(100,213,151,.15);color:var(--good)}.warn{background:rgba(240,199,106,.15);color:var(--warn)}.bad{background:rgba(255,126,126,.15);color:var(--bad)}
+    .hidden{display:none!important}.error{color:var(--bad)}
+    footer{color:var(--muted);font-size:10px;line-height:1.45;padding:6px 5px 0;text-align:center}
+    @media(min-width:700px){.topGrid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.topGrid .card{margin-bottom:0}.grid{grid-template-columns:repeat(3,1fr)}#map{height:390px}.hourly{grid-auto-columns:145px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse</div></div>
+    <button id="locateBtn" class="iconBtn ghost" title="Mein Standort">⌖</button>
+  </header>
+
+  <div class="topGrid">
+    <section class="card">
+      <div class="searchRow">
+        <input id="search" type="search" autocomplete="off" placeholder="Ort, Stadt oder PLZ …" aria-label="Ort suchen" />
+        <button id="searchBtn" class="primary">Suchen</button>
+      </div>
+      <div id="searchResults" class="results"></div>
+      <div id="map"></div>
+      <div class="locationLine">
+        <div><div id="placeName" class="place">Berlin</div><div id="coords" class="coords">52.5200, 13.4050</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><span id="flag" class="flag">🇩🇪</span><button id="favBtn" class="iconBtn" title="Favorit speichern">☆</button></div>
+      </div>
+      <div id="status" class="status">Bereit.</div>
+    </section>
+
+    <section class="card">
+      <div class="sectionTitle"><h2>Astro-Übersicht</h2><span id="updated">–</span></div>
+      <div class="scoreWrap">
+        <div id="scoreDial" class="score" style="--score:0"><strong id="scoreValue">–</strong></div>
+        <div class="scoreText"><b id="scoreLabel">Daten werden geladen</b><div id="scoreDetails">Bewertung aus Wolken, Seeing, Mond, Wind, Feuchte und Bortle.</div></div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div class="metric"><div class="label">Mondphase</div><div id="moonValue" class="value">–</div><div id="moonName" class="small">–</div></div>
+        <div class="metric"><div class="label">Bortle (geschätzt)</div><div id="bortleValue" class="value">–</div><div id="bortleNote" class="small">World Atlas wird geladen</div></div>
+        <div class="metric"><div class="label">SQM (geschätzt)</div><div id="sqmValue" class="value">–</div><div id="sqmNote" class="small">mag/arcsec²</div></div>
+        <div class="metric"><div class="label">Seeing</div><div id="seeingValue" class="value">–</div><div class="small">7Timer! ASTRO</div></div>
+        <div class="metric"><div class="label">Wolken</div><div id="cloudValue" class="value">–</div><div class="small">aktuell</div></div>
+        <div class="metric"><div class="label">Temperatur</div><div id="tempValue" class="value">–</div><div id="weatherText" class="small">–</div></div>
+        <div class="metric"><div class="label">Wind</div><div id="windValue" class="value">–</div><div id="humidityText" class="small">–</div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px">
+    <div class="sectionTitle"><h2>Favoriten</h2><span>auf diesem iPhone gespeichert</span></div>
+    <div id="favList" class="favList"><span class="status">Noch keine Favoriten.</span></div>
+  </section>
+
+  <section class="card">
+    <div class="sectionTitle"><h2>Stundenanalyse ab 18:00</h2><span>24 Stunden</span></div>
+    <div id="hourly" class="hourly"><div class="status">Wetterdaten werden geladen …</div></div>
+  </section>
+
+  <section class="card">
+    <div class="sectionTitle"><h2>ISS live</h2><span>automatische Aktualisierung</span></div>
+    <div class="issGrid">
+      <div class="issItem">Breite / Länge<b id="issCoords">–</b></div>
+      <div class="issItem">Höhe<b id="issAltitude">–</b></div>
+      <div class="issItem">Geschwindigkeit<b id="issVelocity">–</b></div>
+      <div class="issItem">Entfernung zum Ort<b id="issDistance">–</b></div>
+      <div class="issItem">Sichtstatus<b id="issVisibility">–</b></div>
+      <div class="issItem">Zeitpunkt<b id="issTime">–</b></div>
+    </div>
+    <div id="issNote" class="status">ISS-Daten werden geladen …</div>
+  </section>
+
+  <section class="card">
+    <div class="sectionTitle"><h2>World Atlas 2015</h2><span id="bortleStatus">wird geladen</span></div>
+    <div class="settings">
+      Die App liest automatisch <b>data/world_atlas_2015.json</b> und
+      <b>data/world_atlas_2015.bin</b>. Aus der künstlichen Zenit-Himmelshelligkeit
+      wird mit einem natürlichen Hintergrund von 0,174 mcd/m² ein geschätzter SQM-Wert
+      und daraus eine geschätzte Bortle-Klasse berechnet.
+      <br><br>
+      Auf GitHub Pages wird nach Möglichkeit nur die benötigte Rasterzelle per
+      HTTP-Range geladen. Falls der Server keine Range-Anfragen unterstützt, wird
+      die 39,8-MB-Datei einmalig geladen und vom Browser zwischengespeichert.
+    </div>
+  </section>
+
+  <footer>Daten: World Atlas 2015 (Falchi et al.), Open‑Meteo, 7Timer!, Where the ISS at?, OpenStreetMap/Leaflet. Astro-Score ist eine Orientierungshilfe und kein Ersatz für lokale Beobachtung.</footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const state = {
+    lat: 52.52, lon: 13.405, name: 'Berlin', countryCode: 'DE', country: 'Deutschland', timezone: 'Europe/Berlin',
+    weather: null, astro: null, bortle: null, sqm: null, atlasArtificial: null, atlasMeta: null, atlasBuffer: null, atlasToken: 0, issMarker: null
+  };
+
+  const map = L.map('map', {zoomControl:false}).setView([state.lat,state.lon], 8);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19, attribution:'&copy; OpenStreetMap-Mitwirkende'
+  }).addTo(map);
+  const marker = L.marker([state.lat,state.lon], {draggable:true}).addTo(map);
+  const issIcon = L.divIcon({className:'', html:'<div style="font-size:24px;filter:drop-shadow(0 2px 3px #000)">🛰️</div>', iconSize:[28,28], iconAnchor:[14,14]});
+
+  const fmt = (n,d=0) => Number.isFinite(Number(n)) ? Number(n).toFixed(d) : '–';
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const flagEmoji = code => (code || '').toUpperCase().replace(/./g,c=>String.fromCodePoint(127397+c.charCodeAt()));
+  const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const setStatus=(t,error=false)=>{ $('status').textContent=t; $('status').className='status'+(error?' error':''); };
+
+  function haversine(lat1,lon1,lat2,lon2){
+    const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return 2*R*Math.asin(Math.sqrt(a));
+  }
+
+  function weatherLabel(code){
+    const m={0:'Klar',1:'Überwiegend klar',2:'Teilweise bewölkt',3:'Bedeckt',45:'Nebel',48:'Reifnebel',51:'Leichter Niesel',53:'Niesel',55:'Starker Niesel',61:'Leichter Regen',63:'Regen',65:'Starker Regen',71:'Leichter Schnee',73:'Schnee',75:'Starker Schnee',80:'Regenschauer',81:'Schauer',82:'Starke Schauer',95:'Gewitter',96:'Gewitter/Hagel',99:'Starkes Gewitter'};
+    return m[code] || 'Wettercode '+code;
+  }
+
+  function moonPhaseName(phase){
+    if(phase < .03 || phase > .97) return 'Neumond';
+    if(phase < .22) return 'Zunehmende Sichel';
+    if(phase < .28) return 'Erstes Viertel';
+    if(phase < .47) return 'Zunehmender Mond';
+    if(phase < .53) return 'Vollmond';
+    if(phase < .72) return 'Abnehmender Mond';
+    if(phase < .78) return 'Letztes Viertel';
+    return 'Abnehmende Sichel';
+  }
+
+  function seeingText(v){
+    const ranges=['','<0,5″','0,5–0,75″','0,75–1,0″','1,0–1,25″','1,25–1,5″','1,5–2,0″','2,0–2,5″','>2,5″'];
+    return ranges[Number(v)] || '–';
+  }
+  function transparencyText(v){
+    const ranges=['','<0,3','0,3–0,4','0,4–0,5','0,5–0,6','0,6–0,7','0,7–0,85','0,85–1','>1'];
+    return ranges[Number(v)] || '–';
+  }
+  function cloudFrom7Timer(v){ return clamp(Math.round(((Number(v)-1)/8)*100),0,100); }
+
+  function parse7TimerInit(init){
+    const s=String(init||'');
+    if(!/^\d{10}$/.test(s)) return new Date();
+    return new Date(Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(8,10)));
+  }
+
+  function nearestAstro(date){
+    if(!state.astro?.dataseries?.length) return null;
+    const init=parse7TimerInit(state.astro.init);
+    let best=null, diff=Infinity;
+    for(const p of state.astro.dataseries){
+      const d=new Date(init.getTime()+Number(p.timepoint)*3600000);
+      const x=Math.abs(d-date);
+      if(x<diff){diff=x;best={...p,date:d};}
+    }
+    return best;
+  }
+
+  async function searchPlace(){
+    const q=$('search').value.trim(); if(q.length<2) return;
+    setStatus('Ortssuche …');
+    try{
+      const u='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=8&language=de&format=json';
+      const r=await fetch(u); if(!r.ok) throw new Error('HTTP '+r.status); const j=await r.json();
+      const res=j.results||[]; $('searchResults').innerHTML='';
+      if(!res.length){$('searchResults').style.display='none';setStatus('Kein Ort gefunden.',true);return;}
+      res.forEach(p=>{
+        const d=document.createElement('div'); d.className='result';
+        d.innerHTML='<b>'+flagEmoji(p.country_code)+' '+esc(p.name)+'</b><small>'+esc([p.admin1,p.country].filter(Boolean).join(', '))+'</small>';
+        d.onclick=()=>{ $('searchResults').style.display='none'; selectPlace(p.latitude,p.longitude,p.name,p.country_code,p.country,p.timezone,true); };
+        $('searchResults').appendChild(d);
+      });
+      $('searchResults').style.display='block'; setStatus(res.length+' Treffer gefunden.');
+    }catch(e){ setStatus('Ortssuche fehlgeschlagen: '+e.message,true); }
+  }
+
+  async function reverseLocation(lat,lon){
+    // WhereTheISS coordinates endpoint liefert Zeitzone/Ländercode, aber keinen Ortsnamen.
+    // Für Kartenklick behalten wir daher einen neutralen Koordinaten-Namen.
+    try{
+      const r=await fetch(`https://api.wheretheiss.at/v1/coordinates/${lat.toFixed(4)},${lon.toFixed(4)}`);
+      if(r.ok){const j=await r.json(); return {countryCode:j.country_code||'', timezone:j.timezone_id||'auto'};}
+    }catch(_){ }
+    return {countryCode:'',timezone:'auto'};
+  }
+
+  async function selectCoordinates(lat,lon,fromMap=false){
+    setStatus('Standort wird aktualisiert …');
+    const meta=await reverseLocation(lat,lon);
+    selectPlace(lat,lon,fromMap?'Ausgewählter Kartenpunkt':'Mein Standort',meta.countryCode,'',meta.timezone,false);
+  }
+
+  async function selectPlace(lat,lon,name,countryCode='',country='',timezone='auto',zoom=true){
+    state.lat=Number(lat); state.lon=Number(lon); state.name=name||'Ausgewählter Ort'; state.countryCode=countryCode||''; state.country=country||''; state.timezone=timezone||'auto';
+    marker.setLatLng([state.lat,state.lon]); if(zoom) map.setView([state.lat,state.lon], Math.max(map.getZoom(),9));
+    $('placeName').textContent=state.name; $('coords').textContent=`${state.lat.toFixed(4)}, ${state.lon.toFixed(4)}`; $('flag').textContent=flagEmoji(state.countryCode)||'🌍';
+    syncFavButton(); setStatus('Daten werden geladen …');
+    updateMoon(); await Promise.allSettled([loadWeather(),loadAstro()]); await updateAtlasForLocation(); computeScore(); setStatus('Standortdaten aktualisiert.');
+  }
+
+  function updateMoon(date=new Date()){
+    const m=SunCalc.getMoonIllumination(date); const pct=Math.round(m.fraction*100);
+    $('moonValue').textContent=pct+' %'; $('moonName').textContent=moonPhaseName(m.phase);
+  }
+
+  async function loadWeather(){
+    const tz=state.timezone && state.timezone!=='auto' ? state.timezone : 'auto';
+    const vars='temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,cloud_cover,visibility,wind_speed_10m,weather_code';
+    const cur='temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m';
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=${cur}&hourly=${vars}&timezone=${encodeURIComponent(tz)}&forecast_days=3`;
+    const r=await fetch(u); if(!r.ok) throw new Error('Open-Meteo '+r.status); const j=await r.json(); state.weather=j;
+    if(j.timezone) state.timezone=j.timezone;
+    const c=j.current||{}; $('tempValue').textContent=fmt(c.temperature_2m,1)+' °C'; $('cloudValue').textContent=fmt(c.cloud_cover)+' %'; $('windValue').textContent=fmt(c.wind_speed_10m)+' km/h'; $('humidityText').textContent='Feuchte '+fmt(c.relative_humidity_2m)+' %'; $('weatherText').textContent=weatherLabel(c.weather_code);
+    $('updated').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); renderHourly();
+  }
+
+  async function loadAstro(){
+    const u=`https://www.7timer.info/bin/api.pl?lon=${state.lon.toFixed(3)}&lat=${state.lat.toFixed(3)}&product=astro&output=json`;
+    const r=await fetch(u); if(!r.ok) throw new Error('7Timer '+r.status); state.astro=await r.json();
+    const n=nearestAstro(new Date()); $('seeingValue').textContent=n?seeingText(n.seeing):'–'; renderHourly();
+  }
+
+  function first18Index(times){
+    const now=new Date(); let candidate=-1;
+    for(let i=0;i<times.length;i++){
+      const d=new Date(times[i]);
+      if(d.getHours()===18 && d>=new Date(now.getFullYear(),now.getMonth(),now.getDate(),18,0,0)){candidate=i;break;}
+    }
+    if(candidate<0){ for(let i=0;i<times.length;i++){const d=new Date(times[i]); if(d.getHours()===18){candidate=i;break;}} }
+    return Math.max(0,candidate);
+  }
+
+  function renderHourly(){
+    const w=state.weather?.hourly; if(!w?.time?.length) return;
+    const start=first18Index(w.time), end=Math.min(start+24,w.time.length); let html='';
+    for(let i=start;i<end;i++){
+      const d=new Date(w.time[i]); const a=nearestAstro(d);
+      const moon=Math.round(SunCalc.getMoonIllumination(d).fraction*100);
+      html+=`<div class="hour"><div class="time">${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</div><div class="date">${d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})}</div>
+        <div class="row"><span>☁ Wolken</span><b>${fmt(w.cloud_cover[i])}%</b></div>
+        <div class="row"><span>◉ Seeing</span><b>${a?seeingText(a.seeing):'–'}</b></div>
+        <div class="row"><span>⇄ Transp.</span><b>${a?transparencyText(a.transparency):'–'}</b></div>
+        <div class="row"><span>☾ Mond</span><b>${moon}%</b></div>
+        <div class="row"><span>🌡 Temp.</span><b>${fmt(w.temperature_2m[i],1)}°</b></div>
+        <div class="row"><span>💧 Feuchte</span><b>${fmt(w.relative_humidity_2m[i])}%</b></div>
+        <div class="row"><span>↗ Wind</span><b>${fmt(w.wind_speed_10m[i])}</b></div>
+        <div class="row"><span>☂ Regen</span><b>${fmt(w.precipitation_probability[i])}%</b></div></div>`;
+    }
+    $('hourly').innerHTML=html||'<div class="status">Keine Stundenwerte verfügbar.</div>';
+  }
+
+  function sqmFromMcd(totalMcd){
+    return 12.6 - 2.5 * Math.log10(totalMcd * 1e-3);
+  }
+
+  function bortleFromSqm(sqm){
+    // Näherung anhand einer verbreiteten SQM↔Bortle-Zuordnung.
+    if(sqm >= 21.99) return 1;
+    if(sqm >= 21.89) return 2;
+    if(sqm >= 21.69) return 3;
+    if(sqm >= 20.49) return 4;
+    if(sqm >= 19.50) return 5;
+    if(sqm >= 18.94) return 6;
+    if(sqm >= 18.38) return 7;
+    if(sqm >= 17.00) return 8;
+    return 9;
+  }
+
+  function bortleName(b){
+    return ({
+      1:'Exzellenter dunkler Himmel',
+      2:'Wirklich dunkler Himmel',
+      3:'Landhimmel',
+      4:'Land / Vorstadt Übergang',
+      5:'Vorstadthimmel',
+      6:'Heller Vorstadthimmel',
+      7:'Vorstadt / Stadt Übergang',
+      8:'Stadthimmel',
+      9:'Innenstadthimmel'
+    })[b] || '–';
+  }
+
+  async function loadAtlasMeta(){
+    try{
+      const r=await fetch('data/world_atlas_2015.json', {cache:'no-store'});
+      if(!r.ok) throw new Error('Metadaten HTTP '+r.status);
+      const m=await r.json();
+      const required=['width','height','left','right','bottom','top','pixel_width','pixel_height','nodata','log_max'];
+      if(required.some(k => !Number.isFinite(Number(m[k])))) throw new Error('Metadaten unvollständig');
+      state.atlasMeta=m;
+      $('bortleStatus').textContent='bereit';
+      return true;
+    }catch(e){
+      state.atlasMeta=null;
+      $('bortleStatus').textContent='nicht verfügbar';
+      $('bortleValue').textContent='–';
+      $('sqmValue').textContent='–';
+      $('bortleNote').textContent='Atlas-Dateien fehlen';
+      $('sqmNote').textContent='data/world_atlas_2015.* prüfen';
+      console.warn('World Atlas:', e);
+      return false;
+    }
+  }
+
+  function atlasCell(lat, lon){
+    const m=state.atlasMeta;
+    if(!m) return null;
+    if(lat > m.top || lat < m.bottom || lon < m.left || lon >= m.right) return null;
+    const col=Math.floor((lon-Number(m.left))/Number(m.pixel_width));
+    const row=Math.floor((Number(m.top)-lat)/Number(m.pixel_height));
+    if(row<0 || row>=Number(m.height) || col<0 || col>=Number(m.width)) return null;
+    return {row,col,index:row*Number(m.width)+col};
+  }
+
+  function decodeAtlasQ(q){
+    const m=state.atlasMeta;
+    if(!m || q===Number(m.nodata)) return null;
+    return Math.pow(10, (q/65534)*Number(m.log_max)) - 1;
+  }
+
+  function qFromFullAtlas(index){
+    if(!state.atlasBuffer) return null;
+    const off=index*2;
+    if(off+1>=state.atlasBuffer.byteLength) return null;
+    return new DataView(state.atlasBuffer).getUint16(off,true);
+  }
+
+  async function readAtlasQ(index){
+    const cached=qFromFullAtlas(index);
+    if(cached!==null) return cached;
+
+    const off=index*2;
+    const r=await fetch('data/world_atlas_2015.bin',{
+      headers:{'Range':`bytes=${off}-${off+1}`},
+      cache:'force-cache'
+    });
+    if(!r.ok) throw new Error('Raster HTTP '+r.status);
+
+    const buf=await r.arrayBuffer();
+    if(r.status===206 && buf.byteLength>=2){
+      return new DataView(buf).getUint16(0,true);
+    }
+
+    // Fallback: Server ignoriert Range und liefert die ganze Datei.
+    if(r.status===200 && buf.byteLength>=off+2){
+      state.atlasBuffer=buf;
+      $('bortleStatus').textContent='bereit · lokal gecacht';
+      return new DataView(buf).getUint16(off,true);
+    }
+    throw new Error('Unerwartete Rasterantwort');
+  }
+
+  async function updateAtlasForLocation(){
+    const token=++state.atlasToken;
+    if(!state.atlasMeta && !(await loadAtlasMeta())) return;
+
+    const cell=atlasCell(state.lat,state.lon);
+    if(!cell){
+      state.bortle=null; state.sqm=null; state.atlasArtificial=null;
+      $('bortleValue').textContent='–'; $('sqmValue').textContent='–';
+      $('bortleNote').textContent='Außerhalb des Atlas-Rasters';
+      $('sqmNote').textContent='Keine Atlasdaten';
+      computeScore();
+      return;
+    }
+
+    $('bortleNote').textContent='World Atlas wird abgefragt …';
+    try{
+      const q=await readAtlasQ(cell.index);
+      if(token!==state.atlasToken) return;
+      const artificial=decodeAtlasQ(q);
+      if(!Number.isFinite(artificial)){
+        state.bortle=null; state.sqm=null; state.atlasArtificial=null;
+        $('bortleValue').textContent='–'; $('sqmValue').textContent='–';
+        $('bortleNote').textContent='Keine Rasterdaten an diesem Punkt';
+        $('sqmNote').textContent='–';
+        return;
+      }
+
+      const natural=Number(state.atlasMeta.natural_background_mcd_m2 ?? 0.174);
+      const total=artificial+natural;
+      const sqm=sqmFromMcd(total);
+      const b=bortleFromSqm(sqm);
+      state.atlasArtificial=artificial;
+      state.sqm=sqm;
+      state.bortle=b;
+
+      $('bortleValue').textContent=String(b);
+      $('bortleNote').textContent=bortleName(b);
+      $('sqmValue').textContent=fmt(sqm,2);
+      $('sqmNote').textContent=`Atlas künstlich ${fmt(artificial,3)} mcd/m²`;
+      $('bortleStatus').textContent='World Atlas 2015 · bereit';
+      computeScore();
+    }catch(e){
+      if(token!==state.atlasToken) return;
+      state.bortle=null; state.sqm=null; state.atlasArtificial=null;
+      $('bortleValue').textContent='–'; $('sqmValue').textContent='–';
+      $('bortleNote').textContent='Atlas konnte nicht geladen werden';
+      $('sqmNote').textContent='Netzwerk/GitHub Pages prüfen';
+      $('bortleStatus').textContent='Fehler';
+      console.warn('World Atlas Raster:',e);
+    }
+  }
+
+  function computeScore(){
+    const c=state.weather?.current||{}, a=nearestAstro(new Date()), moon=SunCalc.getMoonIllumination(new Date()).fraction*100;
+    if(!Number.isFinite(Number(c.cloud_cover))){return;}
+    const cloud=100-clamp(Number(c.cloud_cover),0,100), seeing=a?100-((Number(a.seeing)-1)/7*100):50, moonScore=100-moon, wind=100-clamp(Number(c.wind_speed_10m||0)*4,0,100), hum=100-clamp((Number(c.relative_humidity_2m||50)-45)*1.5,0,100), bortle=state.bortle?100-((state.bortle-1)/8*100):55;
+    const score=Math.round(cloud*.34+seeing*.23+moonScore*.14+wind*.09+hum*.08+bortle*.12);
+    $('scoreDial').style.setProperty('--score',score); $('scoreValue').textContent=score;
+    let label='Mäßig',cls='warn'; if(score>=78){label='Sehr gut';cls='good'} else if(score>=62){label='Gut';cls='good'} else if(score<42){label='Schwach';cls='bad'};
+    $('scoreLabel').innerHTML=`<span class="pill ${cls}">${label}</span>`;
+    $('scoreDetails').textContent=`Wolken ${fmt(c.cloud_cover)} %, Seeing ${a?seeingText(a.seeing):'–'}, Mond ${Math.round(moon)} %, Bortle ${state.bortle??'–'}.`;
+  }
+
+  function favorites(){try{return JSON.parse(localStorage.getItem('gavvas-favs')||'[]')}catch(_){return[]}}
+  function saveFavorites(a){localStorage.setItem('gavvas-favs',JSON.stringify(a));renderFavorites();syncFavButton()}
+  function favKey(f){return `${Number(f.lat).toFixed(4)},${Number(f.lon).toFixed(4)}`}
+  function syncFavButton(){const key=favKey(state),on=favorites().some(f=>favKey(f)===key);$('favBtn').textContent=on?'★':'☆';$('favBtn').title=on?'Favorit entfernen':'Favorit speichern'}
+  function toggleFavorite(){let a=favorites(),key=favKey(state),i=a.findIndex(f=>favKey(f)===key);if(i>=0)a.splice(i,1);else a.push({lat:state.lat,lon:state.lon,name:state.name,countryCode:state.countryCode,country:state.country,timezone:state.timezone});saveFavorites(a)}
+  function renderFavorites(){const a=favorites();if(!a.length){$('favList').innerHTML='<span class="status">Noch keine Favoriten.</span>';return;}$('favList').innerHTML='';a.forEach(f=>{const d=document.createElement('div');d.className='fav';d.innerHTML=`${flagEmoji(f.countryCode)} ${esc(f.name)} <span class="x">×</span>`;d.onclick=e=>{if(e.target.classList.contains('x')){saveFavorites(a.filter(x=>favKey(x)!==favKey(f)));return;}selectPlace(f.lat,f.lon,f.name,f.countryCode,f.country,f.timezone,true)};$('favList').appendChild(d)})}
+
+  async function loadISS(){
+    try{
+      const r=await fetch('https://api.wheretheiss.at/v1/satellites/25544'); if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();
+      $('issCoords').textContent=`${fmt(j.latitude,2)}°, ${fmt(j.longitude,2)}°`; $('issAltitude').textContent=fmt(j.altitude,0)+' km'; $('issVelocity').textContent=fmt(j.velocity,0)+' km/h'; $('issDistance').textContent=fmt(haversine(state.lat,state.lon,j.latitude,j.longitude),0)+' km'; $('issVisibility').textContent=j.visibility==='daylight'?'Tageslicht':j.visibility==='eclipsed'?'Erdschatten':(j.visibility||'–'); $('issTime').textContent=new Date(j.timestamp*1000).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); $('issNote').textContent='Live-Orbitdaten · NORAD 25544';
+      if(!state.issMarker)state.issMarker=L.marker([j.latitude,j.longitude],{icon:issIcon,interactive:false}).addTo(map);else state.issMarker.setLatLng([j.latitude,j.longitude]);
+    }catch(e){$('issNote').textContent='ISS-Daten derzeit nicht erreichbar.';}
+  }
+
+  marker.on('dragend',()=>{const p=marker.getLatLng();selectCoordinates(p.lat,p.lng,true)});
+  map.on('click',e=>selectCoordinates(e.latlng.lat,e.latlng.lng,true));
+  $('searchBtn').onclick=searchPlace; $('search').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlace()}); $('favBtn').onclick=toggleFavorite;
+  $('locateBtn').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>selectCoordinates(p.coords.latitude,p.coords.longitude,false),e=>setStatus('Standortzugriff nicht möglich: '+e.message,true),{enableHighAccuracy:true,timeout:10000}):setStatus('Geolocation wird nicht unterstützt.',true);
+
+  renderFavorites(); updateMoon(); loadAtlasMeta().finally(()=>selectPlace(state.lat,state.lon,state.name,state.countryCode,state.country,state.timezone,false)); loadISS(); setInterval(loadISS,15000); setInterval(()=>{updateMoon();computeScore()},60000);
+})();
+</script>
+</body>
+</html>
