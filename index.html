@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.9 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
+<!-- Gavvas Astro Analyzer 1.7.10 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Gavvas Astro Analyzer" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="manifest" href="./manifest.webmanifest?v=1.7.9" />
+  <link rel="manifest" href="./manifest.webmanifest?v=1.7.10" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <link rel="apple-touch-icon" sizes="167x167" href="./apple-touch-icon-167.png" />
   <link rel="apple-touch-icon" sizes="152x152" href="./apple-touch-icon-152.png" />
@@ -53,7 +53,7 @@
     #map{height:245px;border-radius:15px;margin-top:12px;background:#0a1320}
     .leaflet-control-attribution{font-size:9px!important}
     /* Klassische OSM-Straßenkarte im moderaten Nachtmodus – kein Relief/keine Topografie. */
-    #map .road-map-tiles{filter:brightness(.78) contrast(.92) saturate(.72) sepia(.08)}
+    #map .road-map-tiles{filter:brightness(.66) contrast(.96) saturate(.70) sepia(.06)}
     #map .leaflet-control-zoom a{background:#101923;color:#e8f0f7;border-color:#263442}
     #map .leaflet-control-zoom a:hover{background:#172432;color:#fff}
     #map .leaflet-control-attribution{background:rgba(8,14,21,.82);color:#aab8c5}
@@ -107,7 +107,7 @@
 <body>
 <div class="app">
   <header>
-    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.9</div></div>
+    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.10</div></div>
     <button id="locateBtn" class="iconBtn ghost" title="Mein Standort">⌖</button>
   </header>
 
@@ -1059,7 +1059,7 @@
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=1.7.9').catch(err => console.warn('Service Worker:', err));
+      navigator.serviceWorker.register('./sw.js?v=1.7.10').catch(err => console.warn('Service Worker:', err));
     });
   }
 
