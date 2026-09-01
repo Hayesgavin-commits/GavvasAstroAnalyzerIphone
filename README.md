@@ -1,4 +1,4 @@
-# Gavvas Astro Analyzer 1.7.10 – Android / iPhone / iPad
+# Gavvas Astro Analyzer 1.7.11 – Android / iPhone / iPad
 
 Diese Version ist als Progressive Web App (PWA) für Android optimiert und bleibt mit iPhone/iPad kompatibel.
 
@@ -54,23 +54,23 @@ Das Dashboard „Die nächsten 7 Nächte“ steht jetzt direkt vor dem Bereich �
 Die ISS-Nachtprognose lädt die aktuellen TLE-Daten jetzt über die WhereTheISS.at-API statt direkt von CelesTrak. Dadurch funktioniert die Berechnung zuverlässiger in Android-PWA, iPhone und iPad.
 
 
-## Änderung 1.7.10
+## Änderung 1.7.11
 - Karte auf klassische OpenStreetMap-Kartenansicht umgestellt.
 - Keine topografische/Relief-Darstellung und keine Höhenlinien.
 - Die künstliche Darkmode-Invertierung der Kartenkacheln wurde entfernt, damit Straßen, Orte, Grenzen und Beschriftungen in der normalen Kartenansicht klar erkennbar sind.
 - Leaflet-Bedienelemente bleiben passend zum dunklen App-Dashboard gestaltet.
-- PWA-Cache auf 1.7.10 erhöht.
+- PWA-Cache auf 1.7.11 erhöht.
 
-## GitHub Update 1.7.10
+## GitHub Update 1.7.11
 ```bat
 cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
 git add .
-git commit -m "Gavvas Astro Analyzer 1.7.10 - Kartenmodus"
+git commit -m "Gavvas Astro Analyzer 1.7.11 - Kartenmodus"
 git push
 ```
 
 
-## 1.7.10
+## 1.7.11
 - Klassische OpenStreetMap-Straßenkarte (keine Topografie/kein Relief)
 - Moderater Nachtmodus: heller als 1.7.5, aber sichtbar dunkler als die Standardkarte
 - Sichtbare Versionsanzeige im Kopfbereich

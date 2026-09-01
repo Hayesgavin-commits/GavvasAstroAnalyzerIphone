@@ -1,4 +1,4 @@
 cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
 git add .
-git commit -m "Gavvas Astro Analyzer 1.7.10 - Kartenmodus sichtbar korrigiert"
+git commit -m "Gavvas Astro Analyzer 1.7.11 - Kartenmodus sichtbar korrigiert"
 git push
