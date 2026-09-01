@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.6 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
+<!-- Gavvas Astro Analyzer 1.7.8 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -53,7 +53,6 @@
     #map{height:245px;border-radius:15px;margin-top:12px;background:#0a1320}
     .leaflet-control-attribution{font-size:9px!important}
     /* API-key-freier Darkmode: offizielle OSM-Rasterkarten werden nur lokal abgedunkelt. */
-    #map .leaflet-tile-pane{filter:invert(92%) hue-rotate(180deg) brightness(82%) contrast(110%) saturate(72%) !important}
     #map .leaflet-control-zoom a{background:#101923;color:#e8f0f7;border-color:#263442}
     #map .leaflet-control-zoom a:hover{background:#172432;color:#fff}
     #map .leaflet-control-attribution{background:rgba(8,14,21,.82);color:#aab8c5}
@@ -209,7 +208,7 @@
     </div>
   </section>
 
-  <footer>Daten: World Atlas 2015 (Falchi et al.), Open‑Meteo, 7Timer!, Where the ISS at?, CelesTrak/satellite.js, OpenStreetMap/Leaflet, International Meteor Organization (Meteorstrom-Kalender). Astro-Index 2.0 folgt der PC-Bewertungslogik; Bortle ist eine Orientierungshilfe. Astronomische Zeiten werden standortbezogen berechnet.</footer>
+  <footer>Daten: World Atlas 2015 (Falchi et al.), Open‑Meteo, 7Timer!, Where the ISS at?, WhereTheISS.at TLE/satellite.js, OpenStreetMap/Leaflet, International Meteor Organization (Meteorstrom-Kalender). Astro-Index 2.0 folgt der PC-Bewertungslogik; Bortle ist eine Orientierungshilfe. Astronomische Zeiten werden standortbezogen berechnet.</footer>
 </div>
 
 <script>
@@ -238,7 +237,7 @@
   const map = L.map('map', {zoomControl:false}).setView([state.lat,state.lon], 8);
   L.control.zoom({position:'bottomright'}).addTo(map);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom:19, attribution:'&copy; OpenStreetMap-Mitwirkende'
+    maxZoom:19, attribution:'&copy; OpenStreetMap-Mitwirkende', className:'road-map-tiles'
   }).addTo(map);
   const marker = L.marker([state.lat,state.lon], {draggable:true}).addTo(map);
   const issIcon = L.divIcon({className:'', html:'<div style="font-size:24px;filter:drop-shadow(0 2px 3px #000)">🛰️</div>', iconSize:[28,28], iconAnchor:[14,14]});
@@ -952,14 +951,16 @@
     $('issMaxElevation').textContent='–';
     $('issPassAltitude').textContent='–';
     try{
+      // TLE über dieselbe CORS-freundliche API wie die ISS-Livedaten laden.
+      // Das vermeidet Browser-/PWA-Probleme und Rate-Limits beim direkten CelesTrak-Abruf.
       const [sat, tleResp]=await Promise.all([
         import('https://cdn.jsdelivr.net/npm/satellite.js@7.1.0/+esm'),
-        fetch('https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE',{cache:'no-store'})
+        fetch('https://api.wheretheiss.at/v1/satellites/25544/tles',{cache:'no-store'})
       ]);
       if(!tleResp.ok) throw new Error('TLE HTTP '+tleResp.status);
-      const lines=(await tleResp.text()).trim().split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-      const l1=lines.find(x=>x.startsWith('1 ')), l2=lines.find(x=>x.startsWith('2 '));
-      if(!l1||!l2) throw new Error('ISS-TLE fehlt');
+      const tle=await tleResp.json();
+      const l1=String(tle.line1||'').trim(), l2=String(tle.line2||'').trim();
+      if(!l1.startsWith('1 ')||!l2.startsWith('2 ')) throw new Error('ISS-TLE fehlt');
       const rec=sat.twoline2satrec(l1,l2);
       const observer={
         longitude:sat.degreesToRadians(state.lon),
@@ -1006,7 +1007,8 @@
       }
     }catch(e){
       if(myToken!==issPredictionToken) return;
-      $('issVisibility').textContent='–'; $('issMaxElevation').textContent='–'; $('issPassAltitude').textContent='–';
+      $('issVisibility').textContent='nicht verfügbar'; $('issMaxElevation').textContent='–'; $('issPassAltitude').textContent='–';
+      $('issVisibility').title='ISS-Prognose konnte nicht geladen werden: '+(e?.message||e);
       console.warn('ISS-Nachtprognose:',e);
     }
   }

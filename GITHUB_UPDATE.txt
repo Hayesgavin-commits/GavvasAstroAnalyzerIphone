@@ -1,1 +1,1 @@
-Gavvas Astro Analyzer 1.7.6 – moderater Darkmode der Karte: heller und besser lesbar, weiterhin ohne API-Key.
+Gavvas Astro Analyzer 1.7.7 – ISS-Nachtprognose repariert: TLE über WhereTheISS.at, maximale Elevation und Überflughöhe.
