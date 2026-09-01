@@ -1,1 +1,4 @@
-Gavvas Astro Analyzer 1.7.7 – ISS-Nachtprognose repariert: TLE über WhereTheISS.at, maximale Elevation und Überflughöhe.
+cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
+git add .
+git commit -m "Gavvas Astro Analyzer 1.7.9 - Kartenmodus sichtbar korrigiert"
+git push
