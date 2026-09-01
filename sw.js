@@ -1,9 +1,11 @@
-const CACHE = 'gavvas-astro-analyzer-v1.6.2';
+const CACHE = 'gavvas-astro-analyzer-v1.6.4';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './apple-touch-icon.png',
+  './apple-touch-icon-167.png',
+  './apple-touch-icon-152.png',
   './icon-192.png',
   './icon-512.png',
   './favicon-32.png',

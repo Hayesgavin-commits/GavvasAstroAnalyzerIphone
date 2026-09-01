@@ -1,15 +1,24 @@
 {
   "name": "Gavvas Astro Analyzer",
   "short_name": "Gavvas Astro",
-  "description": "Mobile Astro-Wetter, Astro-Index und Standortanalyse",
+  "description": "Mobile Astro-Wetter, Astro-Index, Meteorschauer und Standortanalyse",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#050a12",
   "theme_color": "#07111f",
-  "orientation": "portrait-primary",
   "icons": [
-    {"src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }

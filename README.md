@@ -1,41 +1,27 @@
-# Gavvas Astro Analyzer 1.6.2 – iPhone App / PWA
+# Gavvas Astro Analyzer 1.6.4 – iPhone & iPad PWA
 
-Diese Version ist als Progressive Web App (PWA) für das iPhone vorbereitet.
+## Neu in 1.6.4
+- Der zuletzt verwendete Ort wird automatisch auf dem Gerät gespeichert und beim nächsten App-Start wieder geladen.
+- iPad-Unterstützung verbessert: Hoch- und Querformat sind erlaubt, die Oberfläche nutzt größere iPad-Displays besser aus.
+- Zusätzliche Apple-Touch-Icons für iPad (152 px und 167 px).
+- PWA-Cache auf Version 1.6.4 aktualisiert.
 
-## Installation auf dem iPhone
-1. Die GitHub-Pages-Seite in **Safari** öffnen.
-2. Auf **Teilen** tippen.
-3. **Zum Home-Bildschirm** auswählen.
-4. Mit **Hinzufügen** bestätigen.
-
-Danach erscheint Gavvas Astro Analyzer mit dem mitgelieferten App-Symbol auf dem Home-Bildschirm und startet im Standalone-Modus ohne Safari-Adressleiste.
-
-## Neue PWA-Dateien
-- `manifest.webmanifest`
-- `sw.js`
-- `apple-touch-icon.png`
-- `icon-192.png`
-- `icon-512.png`
-- `favicon-32.png`
-
-Die dynamischen Wetter-, ISS- und TLE-Abfragen bleiben online. Das große World-Atlas-Binary wird bewusst nicht im Service-Worker-Cache gespeichert.
+## Installation auf iPhone oder iPad
+1. GitHub-Pages-Seite in Safari öffnen.
+2. Teilen → **Zum Home-Bildschirm**.
+3. **Hinzufügen**.
 
 ## GitHub-Update
-Den kompletten Inhalt dieses Ordners in das Repository kopieren. Wichtig: nicht nur `index.html`, sondern auch Manifest, Service Worker und Icon-Dateien.
+Den kompletten Inhalt dieses Ordners über die vorhandenen Projektdateien kopieren und anschließend:
 
 ```bat
 cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
-git add index.html manifest.webmanifest sw.js apple-touch-icon.png icon-192.png icon-512.png favicon-32.png
-git commit -m "Gavvas Astro Analyzer 1.6.2 - iPhone App PWA"
+git add .
+git commit -m "Gavvas Astro Analyzer 1.6.4 - letzter Ort und iPad"
 git push
 ```
 
 
-## Änderungen 1.6.2
-- Seeing und Transparenz: robuster 7Timer!-Abruf mit zweitem Endpoint; aktuelle Werte werden als Bogensekunden bzw. Prozent angezeigt.
-- ISS kommende Nacht: zusätzlich maximale Elevation über dem Horizont (Grad) und Überflughöhe der ISS über der Erde (km).
-- PWA-Service-Worker: neue Version und Network-first für die App-Seite, damit Updates auf dem iPhone schneller sichtbar werden.
+## Neu in 1.6.4 – Meteorschauer
 
-
-## 1.6.2
-Seeing und Transparenz haben jetzt einen automatischen Open-Meteo-Fallback. Wenn 7Timer! im iPhone-Browser nicht erreichbar ist, werden beide Werte lokal aus den stündlichen Wetterdaten modelliert und weiterhin angezeigt.
+Die App zeigt aktuelle und die nächsten Meteorschauer mit Aktivitätszeitraum, Maximum und maximaler ZHR (Zenithal Hourly Rate). Die Intensität wird zusätzlich als sehr stark/stark/mittel/schwach eingeordnet. Die ZHR ist eine Idealrate bei dunklem Himmel und Radiant im Zenit; die tatsächlich sichtbare Rate kann niedriger sein. Grundlage: Meteorstrom-Kalender der International Meteor Organization (IMO), mit den etablierten jährlichen Aktivitätsfenstern der wichtigsten Ströme.
