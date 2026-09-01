@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.3 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
+<!-- Gavvas Astro Analyzer 1.7.4 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -52,6 +52,8 @@
     .result:last-child{border-bottom:0}.result small{display:block;color:var(--muted);margin-top:2px}
     #map{height:245px;border-radius:15px;margin-top:12px;background:#0a1320}
     .leaflet-control-attribution{font-size:9px!important}
+    /* API-key-freier Darkmode: offizielle OSM-Rasterkarten werden nur lokal abgedunkelt. */
+    .leaflet-tile-pane{filter:brightness(.62) invert(1) contrast(1.22) hue-rotate(180deg) saturate(.72)}
     .locationLine{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-top:12px}
     .place{font-weight:800;font-size:18px}.coords{color:var(--muted);font-size:12px;margin-top:3px}
     .flag{font-size:30px;line-height:1}
@@ -230,8 +232,8 @@
 
   const map = L.map('map', {zoomControl:false}).setView([state.lat,state.lon], 8);
   L.control.zoom({position:'bottomright'}).addTo(map);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom:20, subdomains:'abcd', attribution:'&copy; OpenStreetMap-Mitwirkende &copy; CARTO'
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19, attribution:'&copy; OpenStreetMap-Mitwirkende'
   }).addTo(map);
   const marker = L.marker([state.lat,state.lon], {draggable:true}).addTo(map);
   const issIcon = L.divIcon({className:'', html:'<div style="font-size:24px;filter:drop-shadow(0 2px 3px #000)">🛰️</div>', iconSize:[28,28], iconAnchor:[14,14]});
