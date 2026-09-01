@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.1 · iPhone/iPad/Android PWA · Dashboard vor Meteorschauern -->
+<!-- Gavvas Astro Analyzer 1.7.3 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#07111f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Gavvas Astro" />
+  <meta name="apple-mobile-web-app-title" content="Gavvas Astro Analyzer" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Gavvas Astro Analyzer" />
   <meta name="format-detection" content="telephone=no" />
@@ -50,7 +50,7 @@
     .results{display:none;margin-top:8px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#08121f}
     .result{padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer}
     .result:last-child{border-bottom:0}.result small{display:block;color:var(--muted);margin-top:2px}
-    #map{height:310px;border-radius:15px;margin-top:12px;background:#0a1320}
+    #map{height:245px;border-radius:15px;margin-top:12px;background:#0a1320}
     .leaflet-control-attribution{font-size:9px!important}
     .locationLine{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-top:12px}
     .place{font-weight:800;font-size:18px}.coords{color:var(--muted);font-size:12px;margin-top:3px}
@@ -92,8 +92,9 @@
 
     .hidden{display:none!important}.error{color:var(--bad)}
     footer{color:var(--muted);font-size:10px;line-height:1.45;padding:6px 5px 0;text-align:center}
-    @media(min-width:700px){.topGrid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.topGrid .card{margin-bottom:0}.grid{grid-template-columns:repeat(3,1fr)}#map{height:390px}.hourly{grid-auto-columns:145px}}
-    @media(min-width:1000px){.grid{grid-template-columns:repeat(4,1fr)}#map{height:440px}.week{grid-auto-columns:190px}.hourly{grid-auto-columns:155px}}
+    @media(min-width:640px){.topGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.topGrid .card{margin-bottom:0}.grid{grid-template-columns:repeat(2,1fr)}#map{height:285px}.hourly{grid-auto-columns:145px}}
+    @media(min-width:820px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media(min-width:1000px){.topGrid{grid-template-columns:1.05fr .95fr}.grid{grid-template-columns:repeat(3,1fr)}#map{height:315px}.week{grid-auto-columns:190px}.hourly{grid-auto-columns:155px}}
   </style>
 </head>
 <body>
@@ -144,32 +145,32 @@
     </section>
   </div>
 
-  <section class="card" style="margin-top:12px">
-    <div class="sectionTitle"><h2>Favoriten</h2><span>auf diesem Gerät gespeichert</span></div>
-    <div id="favList" class="favList"><span class="status">Noch keine Favoriten.</span></div>
+  <section class="card">
+    <div class="sectionTitle"><h2>Stundenanalyse ab 18:00</h2><span>24 Stunden</span></div>
+    <div id="hourly" class="hourly"><div class="status">Wetterdaten werden geladen …</div></div>
   </section>
 
   <section class="card">
-    <div class="sectionTitle"><h2>Astronomische Zeiten</h2><span id="astroDateLabel">heute</span></div>
+    <div class="sectionTitle"><h2>Nächste 7 Tage</h2><span>Astro-Index · 5 Sterne</span></div>
+    <div id="week" class="week"><div class="status">7-Tage-Übersicht wird geladen …</div></div>
+  </section>
+
+  <section class="card">
+    <div class="sectionTitle"><h2>Astronomische Daten</h2><span id="astroDateLabel">heute</span></div>
     <div id="astroTimes" class="astroTimes">
       <div class="status">Astronomische Zeiten werden berechnet …</div>
     </div>
   </section>
 
   <section class="card">
-    <div class="sectionTitle"><h2>Die nächsten 7 Nächte</h2><span>Astro-Index · 5 Sterne</span></div>
-    <div id="week" class="week"><div class="status">7-Tage-Übersicht wird geladen …</div></div>
-  </section>
-
-  <section class="card">
-    <div class="sectionTitle"><h2>Meteorschauer</h2><span>aktuell &amp; als Nächstes</span></div>
+    <div class="sectionTitle"><h2>Meteore</h2><span>aktuell &amp; als Nächstes</span></div>
     <div id="meteorShowers" class="meteors"><div class="status">Meteorschauer werden bestimmt …</div></div>
     <div class="status">Intensität = maximale ZHR unter idealen Bedingungen; tatsächlich sichtbare Raten hängen u. a. von Radiantenhöhe, Mondlicht und Himmelsqualität ab.</div>
   </section>
 
-  <section class="card">
-    <div class="sectionTitle"><h2>Stundenanalyse ab 18:00</h2><span>24 Stunden</span></div>
-    <div id="hourly" class="hourly"><div class="status">Wetterdaten werden geladen …</div></div>
+  <section class="card" style="margin-top:12px">
+    <div class="sectionTitle"><h2>Favoriten</h2><span>auf diesem Gerät gespeichert</span></div>
+    <div id="favList" class="favList"><span class="status">Noch keine Favoriten.</span></div>
   </section>
 
   <section class="card">
@@ -229,8 +230,8 @@
 
   const map = L.map('map', {zoomControl:false}).setView([state.lat,state.lon], 8);
   L.control.zoom({position:'bottomright'}).addTo(map);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom:19, attribution:'&copy; OpenStreetMap-Mitwirkende'
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom:20, subdomains:'abcd', attribution:'&copy; OpenStreetMap-Mitwirkende &copy; CARTO'
   }).addTo(map);
   const marker = L.marker([state.lat,state.lon], {draggable:true}).addTo(map);
   const issIcon = L.divIcon({className:'', html:'<div style="font-size:24px;filter:drop-shadow(0 2px 3px #000)">🛰️</div>', iconSize:[28,28], iconAnchor:[14,14]});

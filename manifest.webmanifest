@@ -1,7 +1,7 @@
 {
   "id": "./",
   "name": "Gavvas Astro Analyzer",
-  "short_name": "Gavvas Astro",
+  "short_name": "Gavvas Astro Analyzer",
   "description": "Mobile Astro-Wetter, Astro-Index, Meteorschauer und Standortanalyse",
   "start_url": "./?source=pwa",
   "scope": "./",

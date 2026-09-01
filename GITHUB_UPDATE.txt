@@ -1,3 +1,1 @@
-git add .
-git commit -m "Gavvas Astro Analyzer 1.7.1 - 7 Tage vor Meteorschauern"
-git push
+Gavvas Astro Analyzer 1.7.3 – kompaktere Karte, Astro-Index daneben, 7 Nächte und Stundenanalyse direkt darunter.
