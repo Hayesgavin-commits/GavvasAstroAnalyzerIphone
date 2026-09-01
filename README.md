@@ -1,41 +1,37 @@
-# Gavvas Astro Analyzer 1.2.0
+# Gavvas Astro Analyzer 1.6.1 – iPhone App / PWA
 
-## Dateien für GitHub Pages
+Diese Version ist als Progressive Web App (PWA) für das iPhone vorbereitet.
 
-Die veröffentlichte Struktur muss so aussehen:
+## Installation auf dem iPhone
+1. Die GitHub-Pages-Seite in **Safari** öffnen.
+2. Auf **Teilen** tippen.
+3. **Zum Home-Bildschirm** auswählen.
+4. Mit **Hinzufügen** bestätigen.
 
+Danach erscheint Gavvas Astro Analyzer mit dem mitgelieferten App-Symbol auf dem Home-Bildschirm und startet im Standalone-Modus ohne Safari-Adressleiste.
+
+## Neue PWA-Dateien
+- `manifest.webmanifest`
+- `sw.js`
+- `apple-touch-icon.png`
+- `icon-192.png`
+- `icon-512.png`
+- `favicon-32.png`
+
+Die dynamischen Wetter-, ISS- und TLE-Abfragen bleiben online. Das große World-Atlas-Binary wird bewusst nicht im Service-Worker-Cache gespeichert.
+
+## GitHub-Update
+Den kompletten Inhalt dieses Ordners in das Repository kopieren. Wichtig: nicht nur `index.html`, sondern auch Manifest, Service Worker und Icon-Dateien.
+
+```bat
+cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
+git add index.html manifest.webmanifest sw.js apple-touch-icon.png icon-192.png icon-512.png favicon-32.png
+git commit -m "Gavvas Astro Analyzer 1.6.1 - iPhone App PWA"
+git push
 ```
-/
-├── index.html
-└── data/
-    ├── world_atlas_2015.bin
-    └── world_atlas_2015.json
-```
 
-Kopiere die beiden Dateien, die dein Konverter erzeugt hat, in den Ordner `data`.
 
-## World Atlas
-
-`world_atlas_2015.bin` ist das kompakte Raster aus deiner lokalen
-`World_Atlas_2015.tif`. Die App berechnet daraus:
-
-- künstliche Zenit-Himmelshelligkeit in mcd/m²
-- geschätzten SQM-Wert (mag/arcsec²)
-- geschätzte Bortle-Klasse 1–9
-
-Die Bortle-Klasse ist ausdrücklich eine Näherung, weil die originale Bortle-Skala
-beobachtungsbasiert ist und nicht direkt im World-Atlas-TIFF gespeichert wird.
-
-## GitHub Pages
-
-1. Lege ein GitHub-Repository an, z. B. `gavvas-astro-analyzer`.
-2. Lade `index.html` in den Repository-Root.
-3. Erzeuge dort den Ordner `data`.
-4. Lade `world_atlas_2015.json` und `world_atlas_2015.bin` in `data`.
-5. GitHub: Settings → Pages → Build and deployment → Deploy from a branch.
-6. Branch `main`, Ordner `/ (root)` wählen und speichern.
-7. Die angezeigte Pages-Adresse auf dem iPhone in Safari öffnen.
-8. Safari → Teilen → „Zum Home-Bildschirm“.
-
-Die 39,8-MB-Rasterdatei liegt danach bei GitHub Pages. Der Windows-PC wird für
-die laufende Nutzung nicht mehr benötigt.
+## Änderungen 1.6.1
+- Seeing und Transparenz: robuster 7Timer!-Abruf mit zweitem Endpoint; aktuelle Werte werden als Bogensekunden bzw. Prozent angezeigt.
+- ISS kommende Nacht: zusätzlich maximale Elevation über dem Horizont (Grad) und Überflughöhe der ISS über der Erde (km).
+- PWA-Service-Worker: neue Version und Network-first für die App-Seite, damit Updates auf dem iPhone schneller sichtbar werden.

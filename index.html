@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.6.0 · iPhone PWA · PC Astro-Index 2.0 edition -->
+<!-- Gavvas Astro Analyzer 1.6.1 · iPhone PWA · Seeing/Transparenz + ISS-Passdaten -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -163,6 +163,8 @@
       <div class="issItem">Geschwindigkeit<b id="issVelocity">–</b></div>
       <div class="issItem">Entfernung zum Ort<b id="issDistance">–</b></div>
       <div class="issItem">Kommende Nacht<b id="issVisibility">wird berechnet …</b></div>
+      <div class="issItem">Max. Höhe beim Überflug<b id="issMaxElevation">–</b></div>
+      <div class="issItem">Überflughöhe der ISS<b id="issPassAltitude">–</b></div>
       <div class="issItem">Zeitpunkt<b id="issTime">–</b></div>
     </div>
     <div id="issNote" class="status">ISS-Live- und Sichtbarkeitsdaten werden geladen …</div>
@@ -246,7 +248,7 @@
     return new Date(Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(8,10)));
   }
 
-  function nearestAstro(date){
+  function nearestAstro(date,maxDiffHours=18){
     if(!state.astro?.dataseries?.length) return null;
     const init=parse7TimerInit(state.astro.init);
     let best=null, diff=Infinity;
@@ -255,7 +257,7 @@
       const x=Math.abs(d-date);
       if(x<diff){diff=x;best={...p,date:d};}
     }
-    return diff<=4.5*3600*1000 ? best : null;
+    return diff<=maxDiffHours*3600*1000 ? best : null;
   }
 
   async function searchPlace(){
@@ -550,9 +552,40 @@
   }
 
   async function loadAstro(){
-    const u=`https://www.7timer.info/bin/api.pl?lon=${state.lon.toFixed(3)}&lat=${state.lat.toFixed(3)}&product=astro&output=json`;
-    const r=await fetch(u); if(!r.ok) throw new Error('7Timer '+r.status); state.astro=await r.json();
-    const n=nearestAstro(new Date()); $('seeingValue').textContent=n?seeingText(n.seeing):'–'; $('seeingNote').textContent=n?'modelliertes astronomisches Seeing · Quelle: 7Timer!':'Keine Seeing-Daten'; $('transparencyValue').textContent=n?transparencyText(n.transparency):'–'; $('transparencyNote').textContent=n?'modellierte Transparenz · Quelle: 7Timer!':'Keine Transparenz-Daten'; renderHourly(); renderSevenDays();
+    const lon=state.lon.toFixed(3), lat=state.lat.toFixed(3);
+    const urls=[
+      `https://www.7timer.info/bin/api.pl?lon=${lon}&lat=${lat}&product=astro&output=json`,
+      `https://www.7timer.info/bin/astro.php?lon=${lon}&lat=${lat}&ac=0&lang=en&unit=metric&output=json&tzshift=0`
+    ];
+    let data=null,lastError=null;
+    for(const u of urls){
+      try{
+        const r=await fetch(u,{cache:'no-store',mode:'cors'});
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const j=await r.json();
+        if(!Array.isArray(j?.dataseries)||!j.dataseries.length) throw new Error('keine Datenreihe');
+        data=j; break;
+      }catch(e){ lastError=e; }
+    }
+    if(!data){
+      state.astro=null;
+      $('seeingValue').textContent='–'; $('seeingNote').textContent='7Timer! derzeit nicht erreichbar';
+      $('transparencyValue').textContent='–'; $('transparencyNote').textContent='7Timer! derzeit nicht erreichbar';
+      console.warn('7Timer!',lastError); renderHourly(); renderSevenDays(); return;
+    }
+    state.astro=data;
+    const n=nearestAstro(new Date(),18);
+    if(n){
+      const seeing=seeingArcsec(n.seeing), transparency=transparencyPercent(n.transparency);
+      $('seeingValue').textContent=Number.isFinite(seeing)?fmt(seeing,2)+'″':seeingText(n.seeing);
+      $('seeingNote').textContent=`7Timer! · gültig ${timeAtZone(n.date)} Uhr · ${seeingText(n.seeing)}`;
+      $('transparencyValue').textContent=Number.isFinite(transparency)?fmt(transparency)+' %':transparencyText(n.transparency);
+      $('transparencyNote').textContent=`7Timer! · gültig ${timeAtZone(n.date)} Uhr · Klasse ${n.transparency}`;
+    }else{
+      $('seeingValue').textContent='–'; $('seeingNote').textContent='Keine zeitnahen Seeing-Daten';
+      $('transparencyValue').textContent='–'; $('transparencyNote').textContent='Keine zeitnahen Transparenz-Daten';
+    }
+    renderHourly(); renderSevenDays();
   }
 
   function first18Index(times){
@@ -778,8 +811,10 @@
   async function predictISSForComingNight(){
     const myToken=++issPredictionToken;
     const night=comingAstronomicalNight();
-    if(!night){ $('issVisibility').textContent='–'; return; }
+    if(!night){ $('issVisibility').textContent='–'; $('issMaxElevation').textContent='–'; $('issPassAltitude').textContent='–'; return; }
     $('issVisibility').textContent='wird berechnet …';
+    $('issMaxElevation').textContent='–';
+    $('issPassAltitude').textContent='–';
     try{
       const [sat, tleResp]=await Promise.all([
         import('https://cdn.jsdelivr.net/npm/satellite.js@7.1.0/+esm'),
@@ -811,7 +846,11 @@
         }catch(_){ /* Elevation bleibt als Fallback nutzbar */ }
         const visible=elev>=10 && lit;
         if(visible){
-          if(!best || elev>best.elev) best={date,elev};
+          if(!best || elev>best.elev){
+            let altitudeKm=NaN;
+            try{ altitudeKm=sat.eciToGeodetic(pv.position,gmst).height; }catch(_){}
+            best={date,elev,altitudeKm};
+          }
           inCandidate=true;
         } else if(inCandidate && best){
           break; // erster sichtbarer Durchgang der kommenden Nacht reicht
@@ -820,14 +859,18 @@
       if(myToken!==issPredictionToken) return;
       if(best){
         $('issVisibility').textContent=`Ja · ${timeAtZone(best.date)} Uhr`;
-        $('issVisibility').title=`Max. Höhe ca. ${Math.round(best.elev)}°`;
+        $('issMaxElevation').textContent=`${Math.round(best.elev)}°`;
+        $('issPassAltitude').textContent=Number.isFinite(best.altitudeKm)?`${Math.round(best.altitudeKm)} km`:'–';
+        $('issVisibility').title=`Zeitpunkt der maximalen Elevation: ${timeAtZone(best.date)} Uhr`;
       }else{
         $('issVisibility').textContent='Nein';
+        $('issMaxElevation').textContent='–';
+        $('issPassAltitude').textContent='–';
         $('issVisibility').removeAttribute('title');
       }
     }catch(e){
       if(myToken!==issPredictionToken) return;
-      $('issVisibility').textContent='–';
+      $('issVisibility').textContent='–'; $('issMaxElevation').textContent='–'; $('issPassAltitude').textContent='–';
       console.warn('ISS-Nachtprognose:',e);
     }
   }

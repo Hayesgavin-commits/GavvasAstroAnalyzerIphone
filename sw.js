@@ -1,4 +1,4 @@
-const CACHE = 'gavvas-astro-analyzer-v1.6.0';
+const CACHE = 'gavvas-astro-analyzer-v1.6.1';
 const APP_SHELL = [
   './',
   './index.html',
@@ -33,11 +33,24 @@ self.addEventListener('fetch', event => {
     url.pathname.endsWith('/data/world_atlas_2015.bin');
   if (dynamicHost) return;
 
+  // Für Navigation und index.html zuerst das Netz verwenden, damit iPhones
+  // nach einem GitHub-Pages-Update nicht an einer alten App-Version hängen.
+  if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(req).then(response => {
+        if (response && response.ok && response.type === 'basic') {
+          caches.open(CACHE).then(cache => cache.put(req, response.clone()));
+        }
+        return response;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(req).then(cached => cached || fetch(req).then(response => {
       if (response && response.ok && response.type === 'basic') {
-        const clone = response.clone();
-        caches.open(CACHE).then(cache => cache.put(req, clone));
+        caches.open(CACHE).then(cache => cache.put(req, response.clone()));
       }
       return response;
     }))
