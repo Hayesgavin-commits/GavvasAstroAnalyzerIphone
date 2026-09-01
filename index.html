@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.6.1 · iPhone PWA · Seeing/Transparenz + ISS-Passdaten -->
+<!-- Gavvas Astro Analyzer 1.6.2 · iPhone PWA · Seeing/Transparenz + ISS-Passdaten -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -248,16 +248,63 @@
     return new Date(Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(8,10)));
   }
 
-  function nearestAstro(date,maxDiffHours=18){
-    if(!state.astro?.dataseries?.length) return null;
-    const init=parse7TimerInit(state.astro.init);
-    let best=null, diff=Infinity;
-    for(const p of state.astro.dataseries){
-      const d=new Date(init.getTime()+Number(p.timepoint)*3600000);
+  function modeledAstroFromWeather(date){
+    const h=state.weather?.hourly;
+    if(!h?.time?.length) return null;
+    let best=-1, diff=Infinity;
+    for(let i=0;i<h.time.length;i++){
+      const d=new Date(h.time[i]);
       const x=Math.abs(d-date);
-      if(x<diff){diff=x;best={...p,date:d};}
+      if(x<diff){diff=x;best=i;}
     }
-    return diff<=maxDiffHours*3600*1000 ? best : null;
+    if(best<0 || diff>2*3600000) return null;
+    const n=(a,def=0)=>Number.isFinite(Number(a?.[best]))?Number(a[best]):def;
+    const cloud=n(h.cloud_cover), low=n(h.cloud_cover_low), mid=n(h.cloud_cover_mid), high=n(h.cloud_cover_high);
+    const humidity=n(h.relative_humidity_2m,65), wind=n(h.wind_speed_10m,5), gust=n(h.wind_gusts_10m,wind);
+    const precip=n(h.precipitation_probability), visibility=n(h.visibility,24000);
+    const effective=cloud*.50+low*.25+mid*.15+high*.10;
+    const seeingValue=clamp(0.65 + wind*.055 + Math.max(0,gust-12)*.018 + Math.max(0,humidity-65)*.010 + effective*.0035,0.5,4.0);
+    const transparencyValue=clamp(100 - effective*.62 - Math.max(0,humidity-55)*.50 - precip*.12 - Math.max(0,20000-visibility)/650,5,100);
+    const seeingCode=seeingValue<.5?1:seeingValue<.75?2:seeingValue<1?3:seeingValue<1.25?4:seeingValue<1.5?5:seeingValue<2?6:seeingValue<2.5?7:8;
+    const transparencyCode=transparencyValue>=94?1:transparencyValue>=82?2:transparencyValue>=70?3:transparencyValue>=58?4:transparencyValue>=46?5:transparencyValue>=33?6:transparencyValue>=18?7:8;
+    return {date:new Date(h.time[best]),seeing:seeingCode,transparency:transparencyCode,seeingArcsecValue:seeingValue,transparencyPercentValue:transparencyValue,modeled:true};
+  }
+
+  function nearestAstro(date,maxDiffHours=18){
+    if(state.astro?.dataseries?.length){
+      const init=parse7TimerInit(state.astro.init);
+      let best=null, diff=Infinity;
+      for(const p of state.astro.dataseries){
+        const d=new Date(init.getTime()+Number(p.timepoint)*3600000);
+        const x=Math.abs(d-date);
+        if(x<diff){diff=x;best={...p,date:d,modeled:false};}
+      }
+      if(diff<=maxDiffHours*3600*1000) return best;
+    }
+    return modeledAstroFromWeather(date);
+  }
+
+  function astroSeeingValue(p){
+    if(!p) return NaN;
+    return Number.isFinite(p.seeingArcsecValue)?p.seeingArcsecValue:seeingArcsec(p.seeing);
+  }
+  function astroTransparencyValue(p){
+    if(!p) return NaN;
+    return Number.isFinite(p.transparencyPercentValue)?p.transparencyPercentValue:transparencyPercent(p.transparency);
+  }
+  function refreshAstroMetrics(){
+    const n=nearestAstro(new Date(),18);
+    if(!n){
+      $('seeingValue').textContent='–'; $('seeingNote').textContent='Keine Seeing-Daten verfügbar';
+      $('transparencyValue').textContent='–'; $('transparencyNote').textContent='Keine Transparenz-Daten verfügbar';
+      return;
+    }
+    const seeing=astroSeeingValue(n), transparency=astroTransparencyValue(n);
+    $('seeingValue').textContent=Number.isFinite(seeing)?fmt(seeing,2)+'″':'–';
+    $('transparencyValue').textContent=Number.isFinite(transparency)?fmt(transparency)+' %':'–';
+    const src=n.modeled?'Open-Meteo · lokal modelliert':'7Timer!';
+    $('seeingNote').textContent=`${src} · gültig ${timeAtZone(n.date)} Uhr`;
+    $('transparencyNote').textContent=`${src} · gültig ${timeAtZone(n.date)} Uhr`;
   }
 
   async function searchPlace(){
@@ -299,7 +346,7 @@
     marker.setLatLng([state.lat,state.lon]); if(zoom) map.setView([state.lat,state.lon], Math.max(map.getZoom(),9));
     $('placeName').textContent=state.name; $('coords').textContent=`${state.lat.toFixed(4)}, ${state.lon.toFixed(4)}`; $('flag').textContent=flagEmoji(state.countryCode)||'🌍';
     syncFavButton(); setStatus('Daten werden geladen …');
-    updateMoon(); updateMoonAltitude(); renderAstronomy(); await Promise.allSettled([loadWeather(),loadAstro()]); await updateAtlasForLocation(); computeScore(); renderSevenDays(); predictISSForComingNight(); setStatus('Standortdaten aktualisiert.');
+    updateMoon(); updateMoonAltitude(); renderAstronomy(); await Promise.allSettled([loadWeather(),loadAstro()]); refreshAstroMetrics(); await updateAtlasForLocation(); computeScore(); renderSevenDays(); predictISSForComingNight(); setStatus('Standortdaten aktualisiert.');
   }
 
   function updateMoon(date=new Date()){
@@ -476,7 +523,7 @@
       const total=Number(w.cloud_cover?.[i]), low=Number(w.cloud_cover_low?.[i]), mid=Number(w.cloud_cover_mid?.[i]), high=Number(w.cloud_cover_high?.[i]);
       if([total,low,mid,high].every(Number.isFinite)) effective.push(total*.50+low*.25+mid*.15+high*.10);
       const a=nearestAstro(new Date(w.time[i]));
-      if(a){ const sv=seeingArcsec(a.seeing), tv=transparencyPercent(a.transparency); if(Number.isFinite(sv))seeVals.push(sv); if(Number.isFinite(tv))transpVals.push(tv); }
+      if(a){ const sv=astroSeeingValue(a), tv=astroTransparencyValue(a); if(Number.isFinite(sv))seeVals.push(sv); if(Number.isFinite(tv))transpVals.push(tv); }
       const h=Number(w.relative_humidity_2m?.[i]), t=Number(w.temperature_2m?.[i]), dp=Number(w.dew_point_2m?.[i]);
       if(Number.isFinite(h)) humidity.push(h); if(Number.isFinite(t)&&Number.isFinite(dp)) margins.push(t-dp);
       const ws=Number(w.wind_speed_10m?.[i]), wg=Number(w.wind_gusts_10m?.[i]); if(Number.isFinite(ws))winds.push(ws); if(Number.isFinite(wg))gusts.push(wg);
@@ -569,23 +616,11 @@
     }
     if(!data){
       state.astro=null;
-      $('seeingValue').textContent='–'; $('seeingNote').textContent='7Timer! derzeit nicht erreichbar';
-      $('transparencyValue').textContent='–'; $('transparencyNote').textContent='7Timer! derzeit nicht erreichbar';
-      console.warn('7Timer!',lastError); renderHourly(); renderSevenDays(); return;
+      console.warn('7Timer!',lastError);
+      refreshAstroMetrics(); renderHourly(); renderSevenDays(); return;
     }
     state.astro=data;
-    const n=nearestAstro(new Date(),18);
-    if(n){
-      const seeing=seeingArcsec(n.seeing), transparency=transparencyPercent(n.transparency);
-      $('seeingValue').textContent=Number.isFinite(seeing)?fmt(seeing,2)+'″':seeingText(n.seeing);
-      $('seeingNote').textContent=`7Timer! · gültig ${timeAtZone(n.date)} Uhr · ${seeingText(n.seeing)}`;
-      $('transparencyValue').textContent=Number.isFinite(transparency)?fmt(transparency)+' %':transparencyText(n.transparency);
-      $('transparencyNote').textContent=`7Timer! · gültig ${timeAtZone(n.date)} Uhr · Klasse ${n.transparency}`;
-    }else{
-      $('seeingValue').textContent='–'; $('seeingNote').textContent='Keine zeitnahen Seeing-Daten';
-      $('transparencyValue').textContent='–'; $('transparencyNote').textContent='Keine zeitnahen Transparenz-Daten';
-    }
-    renderHourly(); renderSevenDays();
+    refreshAstroMetrics(); renderHourly(); renderSevenDays();
   }
 
   function first18Index(times){
@@ -608,8 +643,8 @@
       const dew=dewWarning(w.temperature_2m[i],w.dew_point_2m[i]);
       html+=`<div class="hour"><div class="time">${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</div><div class="date">${d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})}</div>
         <div class="row"><span>☁ Wolken</span><b>${fmt(w.cloud_cover[i])}%</b></div>
-        <div class="row"><span>◉ Seeing</span><b>${a?seeingText(a.seeing):'–'}</b></div>
-        <div class="row"><span>⇄ Transp.</span><b>${a?transparencyText(a.transparency):'–'}</b></div>
+        <div class="row"><span>◉ Seeing</span><b>${a&&Number.isFinite(astroSeeingValue(a))?fmt(astroSeeingValue(a),2)+'″':'–'}</b></div>
+        <div class="row"><span>⇄ Transp.</span><b>${a&&Number.isFinite(astroTransparencyValue(a))?fmt(astroTransparencyValue(a))+' %':'–'}</b></div>
         <div class="row"><span>☾ Mond</span><b>${moon}%</b></div>
         <div class="row"><span>↕ Mondhöhe</span><b>${Number.isFinite(moonAlt)?fmt(moonAlt,1)+'°':'–'}</b></div>
         <div class="row"><span>💧 Tau</span><b>${dew.label}</b></div>

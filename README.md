@@ -1,4 +1,4 @@
-# Gavvas Astro Analyzer 1.6.1 – iPhone App / PWA
+# Gavvas Astro Analyzer 1.6.2 – iPhone App / PWA
 
 Diese Version ist als Progressive Web App (PWA) für das iPhone vorbereitet.
 
@@ -26,12 +26,16 @@ Den kompletten Inhalt dieses Ordners in das Repository kopieren. Wichtig: nicht 
 ```bat
 cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
 git add index.html manifest.webmanifest sw.js apple-touch-icon.png icon-192.png icon-512.png favicon-32.png
-git commit -m "Gavvas Astro Analyzer 1.6.1 - iPhone App PWA"
+git commit -m "Gavvas Astro Analyzer 1.6.2 - iPhone App PWA"
 git push
 ```
 
 
-## Änderungen 1.6.1
+## Änderungen 1.6.2
 - Seeing und Transparenz: robuster 7Timer!-Abruf mit zweitem Endpoint; aktuelle Werte werden als Bogensekunden bzw. Prozent angezeigt.
 - ISS kommende Nacht: zusätzlich maximale Elevation über dem Horizont (Grad) und Überflughöhe der ISS über der Erde (km).
 - PWA-Service-Worker: neue Version und Network-first für die App-Seite, damit Updates auf dem iPhone schneller sichtbar werden.
+
+
+## 1.6.2
+Seeing und Transparenz haben jetzt einen automatischen Open-Meteo-Fallback. Wenn 7Timer! im iPhone-Browser nicht erreichbar ist, werden beide Werte lokal aus den stündlichen Wetterdaten modelliert und weiterhin angezeigt.
