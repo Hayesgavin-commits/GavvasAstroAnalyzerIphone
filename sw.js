@@ -1,4 +1,4 @@
-const CACHE = 'gavvas-astro-analyzer-v1.6.4';
+const CACHE = 'gavvas-astro-analyzer-v1.7.1-android';
 const APP_SHELL = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const APP_SHELL = [
   './apple-touch-icon-152.png',
   './icon-192.png',
   './icon-512.png',
+  './icon-maskable-192.png',
+  './icon-maskable-512.png',
   './favicon-32.png',
   './data/world_atlas_2015.json'
 ];

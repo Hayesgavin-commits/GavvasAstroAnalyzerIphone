@@ -1,27 +1,31 @@
-# Gavvas Astro Analyzer 1.6.4 – iPhone & iPad PWA
+# Gavvas Astro Analyzer 1.7.1 – Android / iPhone / iPad
 
-## Neu in 1.6.4
-- Der zuletzt verwendete Ort wird automatisch auf dem Gerät gespeichert und beim nächsten App-Start wieder geladen.
-- iPad-Unterstützung verbessert: Hoch- und Querformat sind erlaubt, die Oberfläche nutzt größere iPad-Displays besser aus.
-- Zusätzliche Apple-Touch-Icons für iPad (152 px und 167 px).
-- PWA-Cache auf Version 1.6.4 aktualisiert.
+Diese Version ist als Progressive Web App (PWA) für Android optimiert und bleibt mit iPhone/iPad kompatibel.
 
-## Installation auf iPhone oder iPad
-1. GitHub-Pages-Seite in Safari öffnen.
-2. Teilen → **Zum Home-Bildschirm**.
-3. **Hinzufügen**.
+## Android installieren
+1. GitHub-Pages-Seite in **Google Chrome** öffnen.
+2. Im App-Hinweis auf **App installieren** tippen, falls der Button erscheint.
+3. Alternativ Chrome-Menü → **App installieren** oder **Zum Startbildschirm hinzufügen**.
+4. Danach startet Gavvas Astro Analyzer im Standalone-Modus mit eigenem App-Symbol.
 
-## GitHub-Update
-Den kompletten Inhalt dieses Ordners über die vorhandenen Projektdateien kopieren und anschließend:
+## Neu in 1.7.1
+- Android-Installationsdialog via `beforeinstallprompt`
+- Android/Chrome Installationshinweis
+- Maskable Icons 192 × 192 und 512 × 512
+- Manifest für Android-PWA erweitert
+- Hoch- und Querformat auf Android, iPhone und iPad
+- bestehende Funktionen aus 1.6.4 unverändert übernommen
 
+## GitHub Update
 ```bat
 cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
 git add .
-git commit -m "Gavvas Astro Analyzer 1.6.4 - letzter Ort und iPad"
+git commit -m "Gavvas Astro Analyzer 1.7.1 - Android PWA"
 git push
 ```
 
+Hinweis: Für eine APK/AAB im Google Play Store wäre zusätzlich ein Android-Wrapper (z. B. Capacitor) und eine signierte Android-Build-Umgebung nötig.
 
-## Neu in 1.6.4 – Meteorschauer
 
-Die App zeigt aktuelle und die nächsten Meteorschauer mit Aktivitätszeitraum, Maximum und maximaler ZHR (Zenithal Hourly Rate). Die Intensität wird zusätzlich als sehr stark/stark/mittel/schwach eingeordnet. Die ZHR ist eine Idealrate bei dunklem Himmel und Radiant im Zenit; die tatsächlich sichtbare Rate kann niedriger sein. Grundlage: Meteorstrom-Kalender der International Meteor Organization (IMO), mit den etablierten jährlichen Aktivitätsfenstern der wichtigsten Ströme.
+## Änderung 1.7.1
+Das Dashboard „Die nächsten 7 Nächte“ steht jetzt direkt vor dem Bereich „Meteorschauer“.

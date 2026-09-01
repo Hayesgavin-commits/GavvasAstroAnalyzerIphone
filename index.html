@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.6.4 · iPhone/iPad PWA · Meteorschauer -->
+<!-- Gavvas Astro Analyzer 1.7.1 · iPhone/iPad/Android PWA · Dashboard vor Meteorschauern -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Gavvas Astro" />
   <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="Gavvas Astro Analyzer" />
   <meta name="format-detection" content="telephone=no" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
@@ -103,8 +104,8 @@
   </header>
 
   <section id="installHint" class="card hidden" style="padding:11px 13px">
-    <div style="font-weight:800;font-size:13px">Auf iPhone/iPad als App installieren</div>
-    <div class="settings" style="margin-top:4px">In Safari auf <b>Teilen</b> tippen → <b>Zum Home-Bildschirm</b>. Danach startet Gavvas Astro Analyzer auf iPhone und iPad ohne Safari-Leiste wie eine App.</div>
+    <div style="font-weight:800;font-size:13px">Als App installieren</div>
+    <div class="settings" style="margin-top:4px"><span id="installHintText">Auf iPhone/iPad: in Safari <b>Teilen</b> → <b>Zum Home-Bildschirm</b>. Auf Android: in Chrome <b>App installieren</b> bzw. <b>Zum Startbildschirm hinzufügen</b>.</span><div style="margin-top:9px"><button id="androidInstallBtn" class="primary hidden" type="button">App installieren</button></div></div>
   </section>
 
   <div class="topGrid">
@@ -156,14 +157,14 @@
   </section>
 
   <section class="card">
-    <div class="sectionTitle"><h2>Meteorschauer</h2><span>aktuell &amp; als Nächstes</span></div>
-    <div id="meteorShowers" class="meteors"><div class="status">Meteorschauer werden bestimmt …</div></div>
-    <div class="status">Intensität = maximale ZHR unter idealen Bedingungen; tatsächlich sichtbare Raten hängen u. a. von Radiantenhöhe, Mondlicht und Himmelsqualität ab.</div>
+    <div class="sectionTitle"><h2>Die nächsten 7 Nächte</h2><span>Astro-Index · 5 Sterne</span></div>
+    <div id="week" class="week"><div class="status">7-Tage-Übersicht wird geladen …</div></div>
   </section>
 
   <section class="card">
-    <div class="sectionTitle"><h2>Die nächsten 7 Nächte</h2><span>Astro-Index · 5 Sterne</span></div>
-    <div id="week" class="week"><div class="status">7-Tage-Übersicht wird geladen …</div></div>
+    <div class="sectionTitle"><h2>Meteorschauer</h2><span>aktuell &amp; als Nächstes</span></div>
+    <div id="meteorShowers" class="meteors"><div class="status">Meteorschauer werden bestimmt …</div></div>
+    <div class="status">Intensität = maximale ZHR unter idealen Bedingungen; tatsächlich sichtbare Raten hängen u. a. von Radiantenhöhe, Mondlicht und Himmelsqualität ab.</div>
   </section>
 
   <section class="card">
@@ -1016,7 +1017,34 @@
   $('locateBtn').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>selectCoordinates(p.coords.latitude,p.coords.longitude,false),e=>setStatus('Standortzugriff nicht möglich: '+e.message,true),{enableHighAccuracy:true,timeout:10000}):setStatus('Geolocation wird nicht unterstützt.',true);
 
   const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  if (!standalone && /iPhone|iPad|iPod/i.test(navigator.userAgent)) $('installHint').classList.remove('hidden');
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (!standalone && (isIOS || isAndroid)) $('installHint').classList.remove('hidden');
+
+  let deferredInstallPrompt = null;
+  const androidInstallBtn = $('androidInstallBtn');
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    if (!standalone && androidInstallBtn) {
+      $('installHint').classList.remove('hidden');
+      androidInstallBtn.classList.remove('hidden');
+    }
+  });
+  if (androidInstallBtn) {
+    androidInstallBtn.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      try { await deferredInstallPrompt.userChoice; } catch (_) {}
+      deferredInstallPrompt = null;
+      androidInstallBtn.classList.add('hidden');
+    });
+  }
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    if (androidInstallBtn) androidInstallBtn.classList.add('hidden');
+    $('installHint').classList.add('hidden');
+  });
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
