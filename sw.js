@@ -1,4 +1,4 @@
-const CACHE = 'gavvas-astro-analyzer-v1.7.12-android';
+const CACHE = 'gavvas-astro-analyzer-v1.7.13-android';
 const APP_SHELL = [
   './',
   './index.html',

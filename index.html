@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.12 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
+<!-- Gavvas Astro Analyzer 1.7.13 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Gavvas Astro Analyzer" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="manifest" href="./manifest.webmanifest?v=1.7.12" />
+  <link rel="manifest" href="./manifest.webmanifest?v=1.7.13" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <link rel="apple-touch-icon" sizes="167x167" href="./apple-touch-icon-167.png" />
   <link rel="apple-touch-icon" sizes="152x152" href="./apple-touch-icon-152.png" />
@@ -52,8 +52,8 @@
     .result:last-child{border-bottom:0}.result small{display:block;color:var(--muted);margin-top:2px}
     #map{height:245px;border-radius:15px;margin-top:12px;background:#0a1320}
     .leaflet-control-attribution{font-size:9px!important}
-    /* Klassische OSM-Straßenkarte im moderaten Nachtmodus – kein Relief/keine Topografie. */
-    #map .road-map-tiles{filter:brightness(.72) contrast(.96) saturate(.72) sepia(.04)}
+    /* Echte dunkle Nachtkarte; Marker und Beschriftungen bleiben klar erkennbar. */
+    #map .night-map-tiles{filter:none}
     #map .leaflet-control-zoom a{background:#101923;color:#e8f0f7;border-color:#263442}
     #map .leaflet-control-zoom a:hover{background:#172432;color:#fff}
     #map .leaflet-control-attribution{background:rgba(8,14,21,.82);color:#aab8c5}
@@ -107,7 +107,7 @@
 <body>
 <div class="app">
   <header>
-    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.12</div></div>
+    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.13</div></div>
     <button id="locateBtn" class="iconBtn ghost" title="Mein Standort">⌖</button>
   </header>
 
@@ -237,8 +237,9 @@
 
   const map = L.map('map', {zoomControl:false}).setView([state.lat,state.lon], 8);
   L.control.zoom({position:'bottomright'}).addTo(map);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom:19, attribution:'&copy; OpenStreetMap-Mitwirkende', className:'road-map-tiles'
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    subdomains:'abcd', maxZoom:20,
+    attribution:'&copy; OpenStreetMap-Mitwirkende &copy; CARTO', className:'night-map-tiles'
   }).addTo(map);
   const marker = L.marker([state.lat,state.lon], {draggable:true}).addTo(map);
   const issIcon = L.divIcon({className:'', html:'<div style="font-size:24px;filter:drop-shadow(0 2px 3px #000)">🛰️</div>', iconSize:[28,28], iconAnchor:[14,14]});
