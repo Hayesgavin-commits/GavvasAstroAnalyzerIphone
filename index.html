@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.2.0 · World Atlas raster edition -->
+<!-- Gavvas Astro Analyzer 1.3.0 · astronomy + 7-night + 5-star edition -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -64,6 +64,17 @@
     .issGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.issItem{font-size:12px;color:var(--muted)}.issItem b{display:block;color:var(--text);font-size:16px;margin-top:2px}
     details{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}summary{cursor:pointer;font-weight:700;font-size:13px}.settings{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}.settings input[type=file]{width:100%;margin-top:8px;color:var(--text)}
     .pill{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.good{background:rgba(100,213,151,.15);color:var(--good)}.warn{background:rgba(240,199,106,.15);color:var(--warn)}.bad{background:rgba(255,126,126,.15);color:var(--bad)}
+
+    .stars{font-size:21px;letter-spacing:1px;white-space:nowrap}.stars .on{color:#ffd86b}.stars .off{color:#35445b}
+    .astroTimes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .astroTime{border:1px solid var(--line);border-radius:13px;padding:10px;background:rgba(255,255,255,.03)}
+    .astroTime .k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+    .astroTime .v{font-size:17px;font-weight:800;margin-top:4px}.astroTime .n{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.3}
+    .week{display:grid;grid-auto-flow:column;grid-auto-columns:170px;gap:8px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity}
+    .dayCard{scroll-snap-align:start;border:1px solid var(--line);border-radius:14px;padding:11px;background:rgba(255,255,255,.03)}
+    .dayCard .day{font-size:15px;font-weight:800}.dayCard .dayDate{font-size:10px;color:var(--muted);margin:2px 0 7px}
+    .darkBadge{display:inline-block;padding:4px 7px;border-radius:999px;background:rgba(119,167,255,.12);color:#a9c7ff;font-size:10px;margin-top:5px}
+
     .hidden{display:none!important}.error{color:var(--bad)}
     footer{color:var(--muted);font-size:10px;line-height:1.45;padding:6px 5px 0;text-align:center}
     @media(min-width:700px){.topGrid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.topGrid .card{margin-bottom:0}.grid{grid-template-columns:repeat(3,1fr)}#map{height:390px}.hourly{grid-auto-columns:145px}}
@@ -95,7 +106,7 @@
       <div class="sectionTitle"><h2>Astro-Übersicht</h2><span id="updated">–</span></div>
       <div class="scoreWrap">
         <div id="scoreDial" class="score" style="--score:0"><strong id="scoreValue">–</strong></div>
-        <div class="scoreText"><b id="scoreLabel">Daten werden geladen</b><div id="scoreDetails">Bewertung aus Wolken, Seeing, Mond, Wind, Feuchte und Bortle.</div></div>
+        <div class="scoreText"><b id="scoreLabel">Daten werden geladen</b><div id="scoreStars" class="stars" aria-label="Astro-Sterne">☆☆☆☆☆</div><div id="scoreDetails">Bewertung aus Wolken, Seeing, Mond, Wind, Feuchte und Bortle.</div></div>
       </div>
       <div class="grid" style="margin-top:12px">
         <div class="metric"><div class="label">Mondphase</div><div id="moonValue" class="value">–</div><div id="moonName" class="small">–</div></div>
@@ -112,6 +123,18 @@
   <section class="card" style="margin-top:12px">
     <div class="sectionTitle"><h2>Favoriten</h2><span>auf diesem iPhone gespeichert</span></div>
     <div id="favList" class="favList"><span class="status">Noch keine Favoriten.</span></div>
+  </section>
+
+  <section class="card">
+    <div class="sectionTitle"><h2>Astronomische Zeiten</h2><span id="astroDateLabel">heute</span></div>
+    <div id="astroTimes" class="astroTimes">
+      <div class="status">Astronomische Zeiten werden berechnet …</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="sectionTitle"><h2>Die nächsten 7 Nächte</h2><span>Astro-Index · 5 Sterne</span></div>
+    <div id="week" class="week"><div class="status">7-Tage-Übersicht wird geladen …</div></div>
   </section>
 
   <section class="card">
@@ -146,7 +169,7 @@
     </div>
   </section>
 
-  <footer>Daten: World Atlas 2015 (Falchi et al.), Open‑Meteo, 7Timer!, Where the ISS at?, OpenStreetMap/Leaflet. Astro-Score ist eine Orientierungshilfe und kein Ersatz für lokale Beobachtung.</footer>
+  <footer>Daten: World Atlas 2015 (Falchi et al.), Open‑Meteo, 7Timer!, Where the ISS at?, OpenStreetMap/Leaflet. Astro-Index und Bortle sind Orientierungshilfen. Astronomische Zeiten werden standortbezogen berechnet.</footer>
 </div>
 
 <script>
@@ -261,7 +284,7 @@
     marker.setLatLng([state.lat,state.lon]); if(zoom) map.setView([state.lat,state.lon], Math.max(map.getZoom(),9));
     $('placeName').textContent=state.name; $('coords').textContent=`${state.lat.toFixed(4)}, ${state.lon.toFixed(4)}`; $('flag').textContent=flagEmoji(state.countryCode)||'🌍';
     syncFavButton(); setStatus('Daten werden geladen …');
-    updateMoon(); await Promise.allSettled([loadWeather(),loadAstro()]); await updateAtlasForLocation(); computeScore(); setStatus('Standortdaten aktualisiert.');
+    updateMoon(); renderAstronomy(); await Promise.allSettled([loadWeather(),loadAstro()]); await updateAtlasForLocation(); computeScore(); renderSevenDays(); setStatus('Standortdaten aktualisiert.');
   }
 
   function updateMoon(date=new Date()){
@@ -269,21 +292,156 @@
     $('moonValue').textContent=pct+' %'; $('moonName').textContent=moonPhaseName(m.phase);
   }
 
+
+  function tzName(){ return state.timezone && state.timezone!=='auto' ? state.timezone : undefined; }
+
+  function timeAtZone(d){
+    if(!(d instanceof Date) || !Number.isFinite(d.getTime())) return '–';
+    try{return new Intl.DateTimeFormat('de-DE',{timeZone:tzName(),hour:'2-digit',minute:'2-digit'}).format(d);}
+    catch(_){return d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}
+  }
+
+  function dateKeyAtZone(d){
+    try{
+      const p=new Intl.DateTimeFormat('en-CA',{timeZone:tzName(),year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);
+      const o=Object.fromEntries(p.map(x=>[x.type,x.value]));
+      return `${o.year}-${o.month}-${o.day}`;
+    }catch(_){return d.toISOString().slice(0,10);}
+  }
+
+  function dateFromKey(key, addDays=0){
+    const [y,m,d]=key.split('-').map(Number);
+    const x=new Date(Date.UTC(y,m-1,d+addDays,12,0,0));
+    return x;
+  }
+
+  function addKeyDays(key, addDays){
+    return dateFromKey(key,addDays).toISOString().slice(0,10);
+  }
+
+  function durationText(a,b){
+    if(!(a instanceof Date)||!(b instanceof Date)||!Number.isFinite(a.getTime())||!Number.isFinite(b.getTime())) return '–';
+    let min=Math.round((b-a)/60000); if(min<0) min+=1440;
+    return `${Math.floor(min/60)} h ${String(min%60).padStart(2,'0')} min`;
+  }
+
+  function moonTimesForLocalDate(key){
+    const candidates=[];
+    for(let off=-1;off<=1;off++){
+      const mt=SunCalc.getMoonTimes(dateFromKey(key,off),state.lat,state.lon);
+      if(mt.rise && dateKeyAtZone(mt.rise)===key) candidates.push(['rise',mt.rise]);
+      if(mt.set && dateKeyAtZone(mt.set)===key) candidates.push(['set',mt.set]);
+    }
+    const rise=candidates.filter(x=>x[0]==='rise').map(x=>x[1]).sort((a,b)=>a-b)[0];
+    const set=candidates.filter(x=>x[0]==='set').map(x=>x[1]).sort((a,b)=>a-b)[0];
+    const base=SunCalc.getMoonTimes(dateFromKey(key),state.lat,state.lon);
+    return {rise,set,alwaysUp:base.alwaysUp,alwaysDown:base.alwaysDown};
+  }
+
+  function astronomyForDate(key){
+    const t=SunCalc.getTimes(dateFromKey(key),state.lat,state.lon);
+    const next=SunCalc.getTimes(dateFromKey(key,1),state.lat,state.lon);
+    const moon=moonTimesForLocalDate(key);
+    return {t,next,moon};
+  }
+
+  function renderAstronomy(){
+    const key=dateKeyAtZone(new Date());
+    const {t,next,moon}=astronomyForDate(key);
+    const pretty=new Intl.DateTimeFormat('de-DE',{timeZone:tzName(),weekday:'short',day:'2-digit',month:'2-digit'}).format(dateFromKey(key));
+    $('astroDateLabel').textContent=pretty;
+    const moonRise=moon.rise?timeAtZone(moon.rise):(moon.alwaysUp?'ganztägig oben':'–');
+    const moonSet=moon.set?timeAtZone(moon.set):(moon.alwaysDown?'ganztägig unten':'–');
+    const darkStart=t.night, darkEnd=next.nightEnd;
+    $('astroTimes').innerHTML=`
+      <div class="astroTime"><div class="k">Sonnenuntergang</div><div class="v">${timeAtZone(t.sunset)}</div><div class="n">Beginn zivile Abenddämmerung</div></div>
+      <div class="astroTime"><div class="k">Zivile Dämmerung Ende</div><div class="v">${timeAtZone(t.dusk)}</div><div class="n">Sonne −6°</div></div>
+      <div class="astroTime"><div class="k">Nautische Dämmerung Ende</div><div class="v">${timeAtZone(t.nauticalDusk)}</div><div class="n">Sonne −12°</div></div>
+      <div class="astroTime"><div class="k">Astronomische Dunkelheit</div><div class="v">${timeAtZone(darkStart)} – ${timeAtZone(darkEnd)}</div><div class="n">${durationText(darkStart,darkEnd)} · Sonne unter −18°</div></div>
+      <div class="astroTime"><div class="k">Astronomische Dämmerung morgens</div><div class="v">${timeAtZone(next.nightEnd)}</div><div class="n">Astronomische Dunkelheit endet</div></div>
+      <div class="astroTime"><div class="k">Sonnenaufgang</div><div class="v">${timeAtZone(next.sunrise)}</div><div class="n">am folgenden Morgen</div></div>
+      <div class="astroTime"><div class="k">Mondaufgang</div><div class="v">${moonRise}</div><div class="n">${moon.alwaysUp?'Mond bleibt über Horizont':''}</div></div>
+      <div class="astroTime"><div class="k">Monduntergang</div><div class="v">${moonSet}</div><div class="n">${moon.alwaysDown?'Mond bleibt unter Horizont':''}</div></div>`;
+  }
+
+  function scoreToStars(score){
+    if(score>=85) return 5;
+    if(score>=70) return 4;
+    if(score>=55) return 3;
+    if(score>=40) return 2;
+    return 1;
+  }
+
+  function starsHtml(stars){
+    return '<span class="on">'+'★'.repeat(stars)+'</span><span class="off">'+'★'.repeat(5-stars)+'</span>';
+  }
+
+  function scoreFromParts({cloud,seeingCode,moon,wind,humidity,bortle}){
+    const cloudScore=100-clamp(Number(cloud),0,100);
+    const seeingScore=Number.isFinite(Number(seeingCode)) ? 100-((clamp(Number(seeingCode),1,8)-1)/7*100) : 50;
+    const moonScore=100-clamp(Number(moon),0,100);
+    const windScore=100-clamp(Number(wind||0)*4,0,100);
+    const humScore=100-clamp((Number(humidity??50)-45)*1.5,0,100);
+    const bortleScore=Number.isFinite(Number(bortle)) ? 100-((clamp(Number(bortle),1,9)-1)/8*100) : 55;
+    return Math.round(cloudScore*.34+seeingScore*.23+moonScore*.14+windScore*.09+humScore*.08+bortleScore*.12);
+  }
+
+  function renderSevenDays(){
+    const w=state.weather?.hourly;
+    if(!w?.time?.length){return;}
+    const firstKey=w.time[0].slice(0,10);
+    let html='';
+    for(let day=0;day<7;day++){
+      const key=addKeyDays(firstKey,day), nextKey=addKeyDays(key,1);
+      const indices=[];
+      for(let i=0;i<w.time.length;i++){
+        const s=w.time[i], k=s.slice(0,10), h=Number(s.slice(11,13));
+        if((k===key && h>=18)||(k===nextKey && h<=6)) indices.push(i);
+      }
+      const scores=[], clouds=[], winds=[], rains=[], sees=[];
+      for(const i of indices){
+        const d=new Date(w.time[i]), a=nearestAstro(d), moon=Math.round(SunCalc.getMoonIllumination(d).fraction*100);
+        const sc=scoreFromParts({cloud:w.cloud_cover[i],seeingCode:a?.seeing,moon,wind:w.wind_speed_10m[i],humidity:w.relative_humidity_2m[i],bortle:state.bortle});
+        scores.push(sc); clouds.push(Number(w.cloud_cover[i])); winds.push(Number(w.wind_speed_10m[i])); rains.push(Number(w.precipitation_probability[i]));
+        if(a) sees.push(Number(a.seeing));
+      }
+      const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN;
+      const score=Math.round(avg(scores)), stars=scoreToStars(Number.isFinite(score)?score:0);
+      const illum=Math.round(SunCalc.getMoonIllumination(dateFromKey(key)).fraction*100);
+      const at=astronomyForDate(key);
+      const dark=durationText(at.t.night,at.next.nightEnd);
+      const label=new Intl.DateTimeFormat('de-DE',{timeZone:tzName(),weekday:'short'}).format(dateFromKey(key));
+      const dateLabel=key.slice(8,10)+'.'+key.slice(5,7)+'.';
+      html+=`<div class="dayCard">
+        <div class="day">${label}</div><div class="dayDate">${dateLabel}</div>
+        <div class="stars">${starsHtml(stars)}</div>
+        <div class="row"><span>Astro-Index</span><b>${Number.isFinite(score)?score:'–'}</b></div>
+        <div class="row"><span>☁ Wolken Ø</span><b>${fmt(avg(clouds))}%</b></div>
+        <div class="row"><span>◉ Seeing</span><b>${sees.length?seeingText(Math.round(avg(sees))):'–'}</b></div>
+        <div class="row"><span>☾ Mond</span><b>${illum}%</b></div>
+        <div class="row"><span>↗ Wind Ø</span><b>${fmt(avg(winds))}</b></div>
+        <div class="row"><span>☂ Regen max.</span><b>${rains.length?fmt(Math.max(...rains)):'–'}%</b></div>
+        <span class="darkBadge">Dunkel ${dark}</span>
+      </div>`;
+    }
+    $('week').innerHTML=html||'<div class="status">Keine 7-Tage-Daten verfügbar.</div>';
+  }
+
   async function loadWeather(){
     const tz=state.timezone && state.timezone!=='auto' ? state.timezone : 'auto';
     const vars='temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,cloud_cover,visibility,wind_speed_10m,weather_code';
     const cur='temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m';
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=${cur}&hourly=${vars}&timezone=${encodeURIComponent(tz)}&forecast_days=3`;
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=${cur}&hourly=${vars}&timezone=${encodeURIComponent(tz)}&forecast_days=7`;
     const r=await fetch(u); if(!r.ok) throw new Error('Open-Meteo '+r.status); const j=await r.json(); state.weather=j;
     if(j.timezone) state.timezone=j.timezone;
     const c=j.current||{}; $('tempValue').textContent=fmt(c.temperature_2m,1)+' °C'; $('cloudValue').textContent=fmt(c.cloud_cover)+' %'; $('windValue').textContent=fmt(c.wind_speed_10m)+' km/h'; $('humidityText').textContent='Feuchte '+fmt(c.relative_humidity_2m)+' %'; $('weatherText').textContent=weatherLabel(c.weather_code);
-    $('updated').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); renderHourly();
+    $('updated').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); renderHourly(); renderSevenDays();
   }
 
   async function loadAstro(){
     const u=`https://www.7timer.info/bin/api.pl?lon=${state.lon.toFixed(3)}&lat=${state.lat.toFixed(3)}&product=astro&output=json`;
     const r=await fetch(u); if(!r.ok) throw new Error('7Timer '+r.status); state.astro=await r.json();
-    const n=nearestAstro(new Date()); $('seeingValue').textContent=n?seeingText(n.seeing):'–'; renderHourly();
+    const n=nearestAstro(new Date()); $('seeingValue').textContent=n?seeingText(n.seeing):'–'; renderHourly(); renderSevenDays();
   }
 
   function first18Index(times){
@@ -471,12 +629,14 @@
   function computeScore(){
     const c=state.weather?.current||{}, a=nearestAstro(new Date()), moon=SunCalc.getMoonIllumination(new Date()).fraction*100;
     if(!Number.isFinite(Number(c.cloud_cover))){return;}
-    const cloud=100-clamp(Number(c.cloud_cover),0,100), seeing=a?100-((Number(a.seeing)-1)/7*100):50, moonScore=100-moon, wind=100-clamp(Number(c.wind_speed_10m||0)*4,0,100), hum=100-clamp((Number(c.relative_humidity_2m||50)-45)*1.5,0,100), bortle=state.bortle?100-((state.bortle-1)/8*100):55;
-    const score=Math.round(cloud*.34+seeing*.23+moonScore*.14+wind*.09+hum*.08+bortle*.12);
+    const score=scoreFromParts({cloud:c.cloud_cover,seeingCode:a?.seeing,moon,wind:c.wind_speed_10m,humidity:c.relative_humidity_2m,bortle:state.bortle});
+    const stars=scoreToStars(score);
     $('scoreDial').style.setProperty('--score',score); $('scoreValue').textContent=score;
-    let label='Mäßig',cls='warn'; if(score>=78){label='Sehr gut';cls='good'} else if(score>=62){label='Gut';cls='good'} else if(score<42){label='Schwach';cls='bad'};
+    let label='Mäßig',cls='warn'; if(score>=85){label='Exzellent';cls='good'} else if(score>=70){label='Sehr gut';cls='good'} else if(score>=55){label='Gut';cls='good'} else if(score<40){label='Schwach';cls='bad'};
     $('scoreLabel').innerHTML=`<span class="pill ${cls}">${label}</span>`;
-    $('scoreDetails').textContent=`Wolken ${fmt(c.cloud_cover)} %, Seeing ${a?seeingText(a.seeing):'–'}, Mond ${Math.round(moon)} %, Bortle ${state.bortle??'–'}.`;
+    $('scoreStars').innerHTML=starsHtml(stars);
+    $('scoreStars').setAttribute('aria-label',`${stars} von 5 Astro-Sternen`);
+    $('scoreDetails').textContent=`${stars}/5 Sterne · Wolken ${fmt(c.cloud_cover)} %, Seeing ${a?seeingText(a.seeing):'–'}, Mond ${Math.round(moon)} %, Bortle ${state.bortle??'–'}.`;
   }
 
   function favorites(){try{return JSON.parse(localStorage.getItem('gavvas-favs')||'[]')}catch(_){return[]}}
@@ -499,7 +659,7 @@
   $('searchBtn').onclick=searchPlace; $('search').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlace()}); $('favBtn').onclick=toggleFavorite;
   $('locateBtn').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>selectCoordinates(p.coords.latitude,p.coords.longitude,false),e=>setStatus('Standortzugriff nicht möglich: '+e.message,true),{enableHighAccuracy:true,timeout:10000}):setStatus('Geolocation wird nicht unterstützt.',true);
 
-  renderFavorites(); updateMoon(); loadAtlasMeta().finally(()=>selectPlace(state.lat,state.lon,state.name,state.countryCode,state.country,state.timezone,false)); loadISS(); setInterval(loadISS,15000); setInterval(()=>{updateMoon();computeScore()},60000);
+  renderFavorites(); updateMoon(); loadAtlasMeta().finally(()=>selectPlace(state.lat,state.lon,state.name,state.countryCode,state.country,state.timezone,false)); loadISS(); setInterval(loadISS,15000); setInterval(()=>{updateMoon();renderAstronomy();computeScore()},60000);
 })();
 </script>
 </body>
