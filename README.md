@@ -1,4 +1,11 @@
-# Gavvas Astro Analyzer 1.7.11 – Android / iPhone / iPad
+# Gavvas Astro Analyzer 1.7.15 – Android / iPhone / iPad
+
+## Änderung 1.7.15
+
+- Automatische Aktualisierung sämtlicher Standortdaten alle 2 Minuten.
+- Neuer Button „Aktualisieren“ direkt neben der Ortsauswahl.
+- Wetterabrufe umgehen den Browsercache, damit wirklich neue Daten geladen werden.
+- Gleichzeitige Mehrfachaktualisierungen werden verhindert.
 
 Diese Version ist als Progressive Web App (PWA) für Android optimiert und bleibt mit iPhone/iPad kompatibel.
 

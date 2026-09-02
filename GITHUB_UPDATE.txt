@@ -1,4 +1,4 @@
 cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
 git add .
-git commit -m "Gavvas Astro Analyzer 1.7.14 - freie Nachtkarte ohne API-Key"
+git commit -m "Gavvas Astro Analyzer 1.7.15 - automatische Aktualisierung"
 git push
