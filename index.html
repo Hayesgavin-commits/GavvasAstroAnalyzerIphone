@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.20 · iPhone/iPad/Android PWA · Nachtstunden-Details -->
+<!-- Gavvas Astro Analyzer 1.7.21 · iPhone/iPad/Android PWA · farbige Stundenanalyse -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Gavvas Astro Analyzer" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="manifest" href="./manifest.webmanifest?v=1.7.20" />
+  <link rel="manifest" href="./manifest.webmanifest?v=1.7.21" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <link rel="apple-touch-icon" sizes="167x167" href="./apple-touch-icon-167.png" />
   <link rel="apple-touch-icon" sizes="152x152" href="./apple-touch-icon-152.png" />
@@ -82,6 +82,12 @@
     .hourly{display:grid;grid-auto-flow:column;grid-auto-columns:134px;gap:8px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity}
     .hour{scroll-snap-align:start;border:1px solid var(--line);border-radius:14px;padding:10px;background:rgba(255,255,255,.03)}
     .hour .time{font-weight:800}.hour .date{font-size:10px;color:var(--muted);margin-bottom:8px}.row{display:flex;justify-content:space-between;gap:7px;font-size:11px;margin:5px 0}.row span:first-child{color:var(--muted)}
+    .hour.index-verybad{background:linear-gradient(180deg,#4b1018,#29090f);border-color:#8c2633}.hour.index-bad{background:linear-gradient(180deg,#6a211c,#37100e);border-color:#a84336}
+    .hour.index-limited{background:linear-gradient(180deg,#704017,#3b210b);border-color:#aa6a24}.hour.index-medium{background:linear-gradient(180deg,#6a5a18,#38300c);border-color:#a8962d}
+    .hour.index-fair{background:linear-gradient(180deg,#315f25,#173515);border-color:#57964a}.hour.index-good{background:linear-gradient(180deg,#176344,#0b3828);border-color:#37a775}
+    .hour.index-verygood{background:linear-gradient(180deg,#0c5555,#072f35);border-color:#27918f}.hour.index-excellent{background:linear-gradient(180deg,#123f79,#081f43);border-color:#3777bd}
+    .hour[class*="index-"] .date,.hour[class*="index-"] .row span:first-child{color:rgba(238,246,255,.78)}
+    .hourIndex{display:flex;justify-content:space-between;align-items:center;border-radius:9px;padding:6px 7px;margin-bottom:8px;background:rgba(0,0,0,.23);font-size:10px}.hourIndex b{font-size:15px}
     .favList{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}.fav{white-space:nowrap;border:1px solid var(--line);background:#0a1524;border-radius:999px;padding:9px 11px;font-size:12px;cursor:pointer}.fav .x{margin-left:7px;color:var(--muted)}
     .issGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.issItem{font-size:12px;color:var(--muted)}.issItem b{display:block;color:var(--text);font-size:16px;margin-top:2px}
     details{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}summary{cursor:pointer;font-weight:700;font-size:13px}.settings{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}.settings input[type=file]{width:100%;margin-top:8px;color:var(--text)}
@@ -121,7 +127,7 @@
 <body>
 <div class="app">
   <header>
-    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.20</div></div>
+    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.21</div></div>
     <button id="locateBtn" class="iconBtn ghost" title="Mein Standort">⌖</button>
   </header>
 
@@ -781,6 +787,29 @@
     return out;
   }
 
+  function nightKeyForHourlyIndex(index){
+    const stamp=state.weather?.hourly?.time?.[index];
+    if(!stamp) return dateKeyAtZone(new Date());
+    const key=stamp.slice(0,10), hour=Number(stamp.slice(11,13));
+    return hour<8?addKeyDays(key,-1):key;
+  }
+
+  function hourlyAstroIndex(index){
+    return pcScoreForIndices([index],nightKeyForHourlyIndex(index))?.score;
+  }
+
+  function hourlyIndexClass(score){
+    if(!Number.isFinite(score)) return '';
+    if(score<30) return 'index-verybad';
+    if(score<=40) return 'index-bad';
+    if(score<=50) return 'index-limited';
+    if(score<=64) return 'index-medium';
+    if(score<=74) return 'index-fair';
+    if(score<=85) return 'index-good';
+    if(score<=95) return 'index-verygood';
+    return 'index-excellent';
+  }
+
   function renderSevenDays(){
     const w=state.weather?.hourly; if(!w?.time?.length)return;
     const firstKey=w.time[0].slice(0,10); let html='';
@@ -823,8 +852,8 @@
     $('nightModalTitle').textContent='Nachtstunden · '+dateText;
     $('nightModalSubtitle').textContent=`18:00 bis 07:00 Uhr · astronomisch dunkel ${timeAtZone(at.t.night)}–${timeAtZone(at.next.nightEnd)}`;
     $('nightModalHours').innerHTML=indices.map(i=>{
-      const d=new Date(w.time[i]), a=nearestAstro(d), moon=SunCalc.getMoonIllumination(d), moonAlt=SunCalc.getMoonPosition(d,state.lat,state.lon).altitude*180/Math.PI, dew=dewWarning(w.temperature_2m[i],w.dew_point_2m[i]);
-      return `<div class="hour"><div class="time">${timeAtZone(d)}</div><div class="date">${new Intl.DateTimeFormat('de-DE',{timeZone:tzName(),weekday:'short',day:'2-digit',month:'2-digit'}).format(d)}</div>
+      const d=new Date(w.time[i]), a=nearestAstro(d), moon=SunCalc.getMoonIllumination(d), moonAlt=SunCalc.getMoonPosition(d,state.lat,state.lon).altitude*180/Math.PI, dew=dewWarning(w.temperature_2m[i],w.dew_point_2m[i]), hourScore=hourlyAstroIndex(i);
+      return `<div class="hour ${hourlyIndexClass(hourScore)}"><div class="time">${timeAtZone(d)}</div><div class="date">${new Intl.DateTimeFormat('de-DE',{timeZone:tzName(),weekday:'short',day:'2-digit',month:'2-digit'}).format(d)}</div><div class="hourIndex"><span>Astro-Index</span><b>${Number.isFinite(hourScore)?hourScore:'–'}</b></div>
         <div class="row"><span>☁ Wolken</span><b>${fmt(w.cloud_cover[i])}%</b></div>
         <div class="row"><span>◉ Seeing</span><b>${a&&Number.isFinite(astroSeeingValue(a))?fmt(astroSeeingValue(a),2)+'″':'–'}</b></div>
         <div class="row"><span>⇄ Transp.</span><b>${a&&Number.isFinite(astroTransparencyValue(a))?fmt(astroTransparencyValue(a))+' %':'–'}</b></div>
@@ -901,7 +930,8 @@
       const moon=Math.round(SunCalc.getMoonIllumination(d).fraction*100);
       const moonAlt=SunCalc.getMoonPosition(d,state.lat,state.lon).altitude*180/Math.PI;
       const dew=dewWarning(w.temperature_2m[i],w.dew_point_2m[i]);
-      html+=`<div class="hour"><div class="time">${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</div><div class="date">${d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})}</div>
+      const hourScore=hourlyAstroIndex(i);
+      html+=`<div class="hour ${hourlyIndexClass(hourScore)}"><div class="time">${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}</div><div class="date">${d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})}</div><div class="hourIndex"><span>Astro-Index</span><b>${Number.isFinite(hourScore)?hourScore:'–'}</b></div>
         <div class="row"><span>☁ Wolken</span><b>${fmt(w.cloud_cover[i])}%</b></div>
         <div class="row"><span>◉ Seeing</span><b>${a&&Number.isFinite(astroSeeingValue(a))?fmt(astroSeeingValue(a),2)+'″':'–'}</b></div>
         <div class="row"><span>⇄ Transp.</span><b>${a&&Number.isFinite(astroTransparencyValue(a))?fmt(astroTransparencyValue(a))+' %':'–'}</b></div>
@@ -1221,7 +1251,7 @@
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=1.7.20').catch(err => console.warn('Service Worker:', err));
+      navigator.serviceWorker.register('./sw.js?v=1.7.21').catch(err => console.warn('Service Worker:', err));
     });
   }
 

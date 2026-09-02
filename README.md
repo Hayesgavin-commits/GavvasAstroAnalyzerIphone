@@ -1,4 +1,11 @@
-# Gavvas Astro Analyzer 1.7.20 – Android / iPhone / iPad
+# Gavvas Astro Analyzer 1.7.21 – Android / iPhone / iPad
+
+## Änderung 1.7.21
+
+- Jede Stunde erhält einen eigenen Astro-Index.
+- Die Stundenkarten werden entsprechend eingefärbt: Dunkelrot für schlecht, über Orange/Gelb und Grün bis Dunkelblau für exzellent.
+- Der Stunden-Astro-Index wird direkt in jeder Karte angezeigt.
+- Die Farbskala gilt sowohl für die normale Stundenanalyse als auch für das Nachtstunden-Fenster.
 
 ## Änderung 1.7.20
 

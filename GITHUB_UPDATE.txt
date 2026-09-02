@@ -1,4 +1,4 @@
 cd /d C:\Astro\GAA\gavvas-astro-analyzer-1.2.0
 git add .
-git commit -m "Gavvas Astro Analyzer 1.7.20 - Mondphasen und Nachtstunden"
+git commit -m "Gavvas Astro Analyzer 1.7.21 - farbige Stundenanalyse"
 git push
