@@ -1,4 +1,11 @@
-# Gavvas Astro Analyzer 1.7.19 – Android / iPhone / iPad
+# Gavvas Astro Analyzer 1.7.20 – Android / iPhone / iPad
+
+## Änderung 1.7.20
+
+- Kleines, zur aktuellen Phase passendes Mondsymbol neben der Mondphase.
+- Die nächsten sieben Tage sind anklickbar.
+- Ein Detailfenster zeigt für die gewählte Nacht alle Stunden von 18:00 bis 07:00 Uhr.
+- Pro Stunde werden Bewölkung, Seeing, Transparenz, Mondphase und -höhe, Tauwarnung, Temperatur, Feuchtigkeit, Wind und Regen angezeigt.
 
 ## Änderung 1.7.19
 

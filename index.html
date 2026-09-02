@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.19 · iPhone/iPad/Android PWA · Satelliten-Wolkenkarte -->
+<!-- Gavvas Astro Analyzer 1.7.20 · iPhone/iPad/Android PWA · Nachtstunden-Details -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Gavvas Astro Analyzer" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="manifest" href="./manifest.webmanifest?v=1.7.19" />
+  <link rel="manifest" href="./manifest.webmanifest?v=1.7.20" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <link rel="apple-touch-icon" sizes="167x167" href="./apple-touch-icon-167.png" />
   <link rel="apple-touch-icon" sizes="152x152" href="./apple-touch-icon-152.png" />
@@ -93,8 +93,15 @@
     .astroTime .k{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
     .astroTime .v{font-size:17px;font-weight:800;margin-top:4px}.astroTime .n{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.3}
     .week{display:grid;grid-auto-flow:column;grid-auto-columns:170px;gap:8px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity}
-    .dayCard{scroll-snap-align:start;border:1px solid var(--line);border-radius:14px;padding:11px;background:rgba(255,255,255,.03)}
+    .dayCard{scroll-snap-align:start;border:1px solid var(--line);border-radius:14px;padding:11px;background:rgba(255,255,255,.03);cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+    .dayCard:hover,.dayCard:focus{border-color:var(--accent);background:rgba(119,167,255,.08);outline:none}.dayCard:active{transform:scale(.985)}
     .dayCard .day{font-size:15px;font-weight:800}.dayCard .dayDate{font-size:10px;color:var(--muted);margin:2px 0 7px}
+    .dayCardHint{font-size:10px;color:#9fc0ff;margin-top:8px;text-align:center}
+    .moonPhaseIcon{display:inline-block;font-size:.85em;margin-right:5px;vertical-align:2px}
+    .nightModal{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
+    .nightModal.hidden{display:none!important}.nightModalBox{width:min(960px,100%);max-height:90vh;overflow:hidden;border:1px solid #314763;border-radius:18px;background:#091321;box-shadow:0 24px 70px rgba(0,0,0,.65);padding:14px}
+    .nightModalHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.nightModalHead h2{font-size:17px;margin:0}.nightModalHead div{font-size:11px;color:var(--muted);margin-top:4px}
+    .nightModalClose{width:42px;height:42px;padding:0;font-size:22px;flex:0 0 auto}.nightModalHours{display:grid;grid-auto-flow:column;grid-auto-columns:145px;gap:8px;overflow:auto;padding:2px 2px 10px;max-height:72vh;scroll-snap-type:x proximity}.nightModalHours .hour{scroll-snap-align:start}
     .darkBadge{display:inline-block;padding:4px 7px;border-radius:999px;background:rgba(119,167,255,.12);color:#a9c7ff;font-size:10px;margin-top:5px}
     .meteors{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:8px}
     .meteorCard{border:1px solid var(--line);border-radius:14px;padding:11px;background:rgba(255,255,255,.03)}
@@ -114,7 +121,7 @@
 <body>
 <div class="app">
   <header>
-    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.19</div></div>
+    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.20</div></div>
     <button id="locateBtn" class="iconBtn ghost" title="Mein Standort">⌖</button>
   </header>
 
@@ -218,6 +225,13 @@
     </div>
   </section>
 
+  <div id="nightModal" class="nightModal hidden" role="dialog" aria-modal="true" aria-labelledby="nightModalTitle">
+    <div class="nightModalBox">
+      <div class="nightModalHead"><div><h2 id="nightModalTitle">Nachtstunden</h2><div id="nightModalSubtitle">18:00 bis 07:00 Uhr</div></div><button id="nightModalClose" class="nightModalClose ghost" type="button" aria-label="Fenster schließen">×</button></div>
+      <div id="nightModalHours" class="nightModalHours"></div>
+    </div>
+  </div>
+
   <footer>Daten: World Atlas 2015 (Falchi et al.), Open‑Meteo, 7Timer!, Where the ISS at?, WhereTheISS.at TLE/satellite.js, OpenStreetMap/Leaflet, International Meteor Organization (Meteorstrom-Kalender). Astro-Index 2.0 folgt der PC-Bewertungslogik; Bortle ist eine Orientierungshilfe. Astronomische Zeiten werden standortbezogen berechnet.</footer>
 </div>
 
@@ -312,6 +326,17 @@
     if(phase < .72) return 'Abnehmender Mond';
     if(phase < .78) return 'Letztes Viertel';
     return 'Abnehmende Sichel';
+  }
+
+  function moonPhaseSymbol(phase){
+    if(phase < .03 || phase > .97) return '🌑';
+    if(phase < .22) return '🌒';
+    if(phase < .28) return '🌓';
+    if(phase < .47) return '🌔';
+    if(phase < .53) return '🌕';
+    if(phase < .72) return '🌖';
+    if(phase < .78) return '🌗';
+    return '🌘';
   }
 
   function seeingText(v){
@@ -488,7 +513,7 @@
 
   function updateMoon(date=new Date()){
     const m=SunCalc.getMoonIllumination(date); const pct=Math.round(m.fraction*100);
-    $('moonValue').textContent=pct+' %'; $('moonName').textContent=moonPhaseName(m.phase);
+    $('moonValue').innerHTML=`<span class="moonPhaseIcon" aria-hidden="true">${moonPhaseSymbol(m.phase)}</span>${pct} %`; $('moonName').textContent=moonPhaseName(m.phase);
   }
 
   function updateMoonAltitude(date=new Date()){
@@ -765,24 +790,60 @@
       const winds=indices.map(i=>Number(w.wind_speed_10m[i])).filter(Number.isFinite);
       const rains=indices.map(i=>Number(w.precipitation_probability[i])).filter(Number.isFinite);
       const score=pc?.score, stars=scoreToStars(Number.isFinite(score)?score:0);
-      const illum=Math.round(SunCalc.getMoonIllumination(dateFromKey(key)).fraction*100);
+      const moonInfo=SunCalc.getMoonIllumination(dateFromKey(key)), illum=Math.round(moonInfo.fraction*100), moonIcon=moonPhaseSymbol(moonInfo.phase);
       const at=astronomyForDate(key), dark=durationText(at.t.night,at.next.nightEnd);
       const label=new Intl.DateTimeFormat('de-DE',{timeZone:tzName(),weekday:'short'}).format(dateFromKey(key));
       const dateLabel=key.slice(8,10)+'.'+key.slice(5,7)+'.';
-      html+=`<div class="dayCard"><div class="day">${label}</div><div class="dayDate">${dateLabel}</div>
+      html+=`<div class="dayCard" data-night-key="${key}" role="button" tabindex="0" aria-label="Nachtstunden für ${dateLabel} anzeigen"><div class="day">${label}</div><div class="dayDate">${dateLabel}</div>
         <div class="stars">${starsHtml(stars)}</div>
         <div class="row"><span>Astro-Index</span><b>${Number.isFinite(score)?score:'–'}</b></div>
         <div class="row"><span>☁ Wolken Ø</span><b>${fmt(average(clouds))}%</b></div>
         <div class="row"><span>◉ Seeing</span><b>${pc&&Number.isFinite(pc.seeing)?fmt(pc.seeing,2)+'″':'–'}</b></div>
         <div class="row"><span>⇄ Transp.</span><b>${pc&&Number.isFinite(pc.transparency)?fmt(pc.transparency)+'%':'–'}</b></div>
-        <div class="row"><span>☾ Mond</span><b>${illum}%</b></div>
+        <div class="row"><span>${moonIcon} Mond</span><b>${illum}%</b></div>
         <div class="row"><span>↕ Mondhöhe 00h</span><b>${pc&&Number.isFinite(pc.moonAltitude)?fmt(pc.moonAltitude,1)+'°':'–'}</b></div>
         <div class="row"><span>💧 Tauwarnung</span><b>${pc&&Number.isFinite(pc.dewMargin)?(pc.dewMargin<1.5?'Sehr hoch':pc.dewMargin<3?'Erhöht':'Gering'):'–'}</b></div>
         <div class="row"><span>↗ Wind Ø</span><b>${fmt(average(winds))}</b></div>
         <div class="row"><span>☂ Regen max.</span><b>${rains.length?fmt(Math.max(...rains)):'–'}%</b></div>
-        <span class="darkBadge">Dunkel ${dark}</span></div>`;
+        <span class="darkBadge">Dunkel ${dark}</span><div class="dayCardHint">Antippen für Nachtstunden</div></div>`;
     }
     $('week').innerHTML=html||'<div class="status">Keine 7-Tage-Daten verfügbar.</div>';
+    $('week').querySelectorAll('.dayCard').forEach(card=>{
+      const open=()=>showNightHours(card.dataset.nightKey);
+      card.addEventListener('click',open);
+      card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+    });
+  }
+
+  function showNightHours(key){
+    const w=state.weather?.hourly, indices=nightIndicesForKey(key);
+    if(!w||!indices.length){setStatus('Für diese Nacht sind keine Stundenwerte verfügbar.',true);return;}
+    const dateText=new Intl.DateTimeFormat('de-DE',{timeZone:tzName(),weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}).format(dateFromKey(key));
+    const at=astronomyForDate(key);
+    $('nightModalTitle').textContent='Nachtstunden · '+dateText;
+    $('nightModalSubtitle').textContent=`18:00 bis 07:00 Uhr · astronomisch dunkel ${timeAtZone(at.t.night)}–${timeAtZone(at.next.nightEnd)}`;
+    $('nightModalHours').innerHTML=indices.map(i=>{
+      const d=new Date(w.time[i]), a=nearestAstro(d), moon=SunCalc.getMoonIllumination(d), moonAlt=SunCalc.getMoonPosition(d,state.lat,state.lon).altitude*180/Math.PI, dew=dewWarning(w.temperature_2m[i],w.dew_point_2m[i]);
+      return `<div class="hour"><div class="time">${timeAtZone(d)}</div><div class="date">${new Intl.DateTimeFormat('de-DE',{timeZone:tzName(),weekday:'short',day:'2-digit',month:'2-digit'}).format(d)}</div>
+        <div class="row"><span>☁ Wolken</span><b>${fmt(w.cloud_cover[i])}%</b></div>
+        <div class="row"><span>◉ Seeing</span><b>${a&&Number.isFinite(astroSeeingValue(a))?fmt(astroSeeingValue(a),2)+'″':'–'}</b></div>
+        <div class="row"><span>⇄ Transp.</span><b>${a&&Number.isFinite(astroTransparencyValue(a))?fmt(astroTransparencyValue(a))+' %':'–'}</b></div>
+        <div class="row"><span>${moonPhaseSymbol(moon.phase)} Mond</span><b>${Math.round(moon.fraction*100)}%</b></div>
+        <div class="row"><span>↕ Mondhöhe</span><b>${Number.isFinite(moonAlt)?fmt(moonAlt,1)+'°':'–'}</b></div>
+        <div class="row"><span>💧 Tau</span><b>${dew.label}</b></div>
+        <div class="row"><span>🌡 Temp.</span><b>${fmt(w.temperature_2m[i],1)}°</b></div>
+        <div class="row"><span>💧 Feuchte</span><b>${fmt(w.relative_humidity_2m[i])}%</b></div>
+        <div class="row"><span>↗ Wind</span><b>${fmt(w.wind_speed_10m[i])}</b></div>
+        <div class="row"><span>☂ Regen</span><b>${fmt(w.precipitation_probability[i])}%</b></div></div>`;
+    }).join('');
+    $('nightModal').classList.remove('hidden');
+    document.body.style.overflow='hidden';
+    $('nightModalClose').focus();
+  }
+
+  function closeNightModal(){
+    $('nightModal').classList.add('hidden');
+    document.body.style.overflow='';
   }
 
   async function loadWeather(){
@@ -1123,6 +1184,9 @@
   marker.on('dragend',()=>{const p=marker.getLatLng();selectCoordinates(p.lat,p.lng,true)});
   map.on('click',e=>selectCoordinates(e.latlng.lat,e.latlng.lng,true));
   $('searchBtn').onclick=searchPlace; $('refreshBtn').onclick=()=>refreshCurrentPlace(false); $('search').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlace()}); $('favBtn').onclick=toggleFavorite;
+  $('nightModalClose').onclick=closeNightModal;
+  $('nightModal').addEventListener('click',e=>{if(e.target===$('nightModal'))closeNightModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('nightModal').classList.contains('hidden'))closeNightModal();});
   $('locateBtn').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>selectCoordinates(p.coords.latitude,p.coords.longitude,false),e=>setStatus('Standortzugriff nicht möglich: '+e.message,true),{enableHighAccuracy:true,timeout:10000}):setStatus('Geolocation wird nicht unterstützt.',true);
 
   const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -1157,7 +1221,7 @@
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=1.7.19').catch(err => console.warn('Service Worker:', err));
+      navigator.serviceWorker.register('./sw.js?v=1.7.20').catch(err => console.warn('Service Worker:', err));
     });
   }
 
