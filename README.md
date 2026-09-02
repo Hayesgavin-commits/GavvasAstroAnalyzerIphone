@@ -1,4 +1,18 @@
-# Gavvas Astro Analyzer 1.7.15 – Android / iPhone / iPad
+# Gavvas Astro Analyzer 1.7.17 – Android / iPhone / iPad
+
+## Änderung 1.7.17
+
+- Bei Kartenpunkten wird ausdrücklich die deutsche Ortsbezeichnung bevorzugt.
+- Mehrsprachige Namensfelder werden nach deutschen Namen durchsucht.
+- Die Rückwärtssuche fordert Antworten mit deutscher Sprachpriorität an.
+
+## Änderung 1.7.16
+
+- Kartenpunkte werden nach Möglichkeit mit ihrem Ortsnamen angezeigt.
+- Manuelle Aktualisierung über die Schaltfläche „Aktualisieren“.
+- Anzeige der letzten und der nächsten Aktualisierungszeit.
+- Automatische Aktualisierung jetzt alle 10 Minuten.
+- Favoriten werden direkt unter der Karte angezeigt.
 
 ## Änderung 1.7.15
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.15 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
+<!-- Gavvas Astro Analyzer 1.7.17 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Gavvas Astro Analyzer" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="manifest" href="./manifest.webmanifest?v=1.7.15" />
+  <link rel="manifest" href="./manifest.webmanifest?v=1.7.17" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <link rel="apple-touch-icon" sizes="167x167" href="./apple-touch-icon-167.png" />
   <link rel="apple-touch-icon" sizes="152x152" href="./apple-touch-icon-152.png" />
@@ -64,6 +64,9 @@
     .place{font-weight:800;font-size:18px}.coords{color:var(--muted);font-size:12px;margin-top:3px}
     .flag{font-size:30px;line-height:1}
     .status{font-size:12px;color:var(--muted);margin:8px 2px 0;min-height:16px}
+    .refreshTimes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px;font-size:11px;color:var(--muted)}
+    .refreshTimes span{border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(255,255,255,.025)}
+    .refreshTimes b{display:block;color:var(--text);margin-top:2px;font-size:12px}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
     .metric{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:14px;padding:11px;min-height:76px}
     .metric .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
@@ -108,7 +111,7 @@
 <body>
 <div class="app">
   <header>
-    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.15</div></div>
+    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.17</div></div>
     <button id="locateBtn" class="iconBtn ghost" title="Mein Standort">⌖</button>
   </header>
 
@@ -126,11 +129,17 @@
       </div>
       <div id="searchResults" class="results"></div>
       <div id="map"></div>
+      <div class="sectionTitle" style="margin-top:12px"><h2>Favoriten</h2><span>auf diesem Gerät gespeichert</span></div>
+      <div id="favList" class="favList"><span class="status">Noch keine Favoriten.</span></div>
       <div class="locationLine">
         <div><div id="placeName" class="place">Berlin</div><div id="coords" class="coords">52.5200, 13.4050</div></div>
         <div style="display:flex;align-items:center;gap:8px"><span id="flag" class="flag">🇩🇪</span><button id="favBtn" class="iconBtn" title="Favorit speichern">☆</button></div>
       </div>
       <div id="status" class="status">Bereit.</div>
+      <div class="refreshTimes">
+        <span>Letzte Aktualisierung<b id="lastRefresh">–</b></span>
+        <span>Nächste Aktualisierung<b id="nextRefresh">–</b></span>
+      </div>
     </section>
 
     <section class="card">
@@ -175,11 +184,6 @@
     <div class="sectionTitle"><h2>Meteore</h2><span>aktuell &amp; als Nächstes</span></div>
     <div id="meteorShowers" class="meteors"><div class="status">Meteorschauer werden bestimmt …</div></div>
     <div class="status">Intensität = maximale ZHR unter idealen Bedingungen; tatsächlich sichtbare Raten hängen u. a. von Radiantenhöhe, Mondlicht und Himmelsqualität ab.</div>
-  </section>
-
-  <section class="card" style="margin-top:12px">
-    <div class="sectionTitle"><h2>Favoriten</h2><span>auf diesem Gerät gespeichert</span></div>
-    <div id="favList" class="favList"><span class="status">Noch keine Favoriten.</span></div>
   </section>
 
   <section class="card">
@@ -368,19 +372,30 @@
   }
 
   async function reverseLocation(lat,lon){
-    // WhereTheISS coordinates endpoint liefert Zeitzone/Ländercode, aber keinen Ortsnamen.
-    // Für Kartenklick behalten wir daher einen neutralen Koordinaten-Namen.
-    try{
-      const r=await fetch(`https://api.wheretheiss.at/v1/coordinates/${lat.toFixed(4)},${lon.toFixed(4)}`);
-      if(r.ok){const j=await r.json(); return {countryCode:j.country_code||'', timezone:j.timezone_id||'auto'};}
-    }catch(_){ }
-    return {countryCode:'',timezone:'auto'};
+    const result={name:'',country:'',countryCode:'',timezone:'auto'};
+    const placeRequest=fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}&zoom=10&addressdetails=1&namedetails=1&accept-language=de-DE,de`,{cache:'no-store',headers:{'Accept-Language':'de-DE,de;q=0.9'}}).then(async r=>{
+      if(!r.ok) throw new Error('Ortsname HTTP '+r.status);
+      const j=await r.json(), a=j.address||{}, names=j.namedetails||{};
+      const germanName=names['name:de']||names['official_name:de']||names['short_name:de']||names['alt_name:de'];
+      result.name=germanName||a.city||a.town||a.village||a.municipality||a.hamlet||a.suburb||a.county||String(j.display_name||'').split(',')[0].trim();
+      result.country=a.country||'';
+      result.countryCode=String(a.country_code||'').toUpperCase();
+    });
+    const timezoneRequest=fetch(`https://api.wheretheiss.at/v1/coordinates/${lat.toFixed(4)},${lon.toFixed(4)}`,{cache:'no-store'}).then(async r=>{
+      if(!r.ok) throw new Error('Zeitzone HTTP '+r.status);
+      const j=await r.json();
+      result.countryCode=result.countryCode||j.country_code||'';
+      result.timezone=j.timezone_id||'auto';
+    });
+    await Promise.allSettled([placeRequest,timezoneRequest]);
+    return result;
   }
 
   async function selectCoordinates(lat,lon,fromMap=false){
     setStatus('Standort wird aktualisiert …');
     const meta=await reverseLocation(lat,lon);
-    selectPlace(lat,lon,fromMap?'Ausgewählter Kartenpunkt':'Mein Standort',meta.countryCode,'',meta.timezone,false);
+    const fallback=`Kartenpunkt ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}`;
+    await selectPlace(lat,lon,meta.name||fallback,meta.countryCode,meta.country,meta.timezone,false);
   }
 
   async function selectPlace(lat,lon,name,countryCode='',country='',timezone='auto',zoom=true){
@@ -389,7 +404,23 @@
     marker.setLatLng([state.lat,state.lon]); if(zoom) map.setView([state.lat,state.lon], Math.max(map.getZoom(),9));
     $('placeName').textContent=state.name; $('coords').textContent=`${state.lat.toFixed(4)}, ${state.lon.toFixed(4)}`; $('flag').textContent=flagEmoji(state.countryCode)||'🌍';
     syncFavButton(); setStatus('Daten werden geladen …');
-    updateMoon(); updateMoonAltitude(); renderAstronomy(); renderMeteorShowers(); await Promise.allSettled([loadWeather(),loadAstro()]); refreshAstroMetrics(); await updateAtlasForLocation(); computeScore(); renderSevenDays(); predictISSForComingNight(); setStatus('Standortdaten aktualisiert.');
+    updateMoon(); updateMoonAltitude(); renderAstronomy(); renderMeteorShowers(); await Promise.allSettled([loadWeather(),loadAstro()]); refreshAstroMetrics(); await updateAtlasForLocation(); computeScore(); renderSevenDays(); predictISSForComingNight(); markDataUpdated(); setStatus('Standortdaten aktualisiert.');
+  }
+
+  const AUTO_REFRESH_MS=10*60*1000;
+  let autoRefreshTimer=null;
+  function formatRefreshTime(date){
+    return date.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+  function scheduleNextRefresh(){
+    if(autoRefreshTimer) clearTimeout(autoRefreshTimer);
+    const next=new Date(Date.now()+AUTO_REFRESH_MS);
+    $('nextRefresh').textContent=formatRefreshTime(next);
+    autoRefreshTimer=setTimeout(()=>refreshCurrentPlace(true),AUTO_REFRESH_MS);
+  }
+  function markDataUpdated(){
+    $('lastRefresh').textContent=formatRefreshTime(new Date());
+    scheduleNextRefresh();
   }
 
   let refreshRunning=false;
@@ -1083,11 +1114,11 @@
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=1.7.15').catch(err => console.warn('Service Worker:', err));
+      navigator.serviceWorker.register('./sw.js?v=1.7.17').catch(err => console.warn('Service Worker:', err));
     });
   }
 
-  renderFavorites(); renderMeteorShowers(); updateMoon(); loadAtlasMeta().finally(()=>selectPlace(state.lat,state.lon,state.name,state.countryCode,state.country,state.timezone,Boolean(savedPlace))); loadISS(); predictISSForComingNight(); setInterval(loadISS,15000); setInterval(()=>{updateMoon();renderAstronomy();computeScore()},60000); setInterval(()=>refreshCurrentPlace(true),120000);
+  renderFavorites(); renderMeteorShowers(); updateMoon(); loadAtlasMeta().finally(()=>selectPlace(state.lat,state.lon,state.name,state.countryCode,state.country,state.timezone,Boolean(savedPlace))); loadISS(); predictISSForComingNight(); setInterval(loadISS,15000); setInterval(()=>{updateMoon();renderAstronomy();computeScore()},60000);
 })();
 </script>
 </body>
