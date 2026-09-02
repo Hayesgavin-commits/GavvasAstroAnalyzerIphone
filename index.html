@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Gavvas Astro Analyzer 1.7.17 · iPhone/iPad/Android PWA · kompaktes Dashboard -->
+<!-- Gavvas Astro Analyzer 1.7.19 · iPhone/iPad/Android PWA · Satelliten-Wolkenkarte -->
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -11,7 +11,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="application-name" content="Gavvas Astro Analyzer" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="manifest" href="./manifest.webmanifest?v=1.7.17" />
+  <link rel="manifest" href="./manifest.webmanifest?v=1.7.19" />
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <link rel="apple-touch-icon" sizes="167x167" href="./apple-touch-icon-167.png" />
   <link rel="apple-touch-icon" sizes="152x152" href="./apple-touch-icon-152.png" />
@@ -60,6 +60,9 @@
     #map .leaflet-control-attribution{background:rgba(8,14,21,.82);color:#aab8c5}
     #map .leaflet-control-attribution a{color:#8ec7ff}
     #map .leaflet-marker-pane,#map .leaflet-shadow-pane{filter:none !important}
+    #map .mapCloudBadge{min-width:128px;border:1px solid #314863;border-radius:12px;background:rgba(7,16,28,.92);box-shadow:0 4px 16px rgba(0,0,0,.35);padding:8px 10px;color:#f6f8fc;line-height:1.2;backdrop-filter:blur(6px)}
+    #map .mapCloudBadge .cloudMain{font-size:17px;font-weight:900;white-space:nowrap}
+    #map .mapCloudBadge .cloudNote{font-size:10px;color:#b3c2d5;margin-top:3px;white-space:nowrap}
     .locationLine{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-top:12px}
     .place{font-weight:800;font-size:18px}.coords{color:var(--muted);font-size:12px;margin-top:3px}
     .flag{font-size:30px;line-height:1}
@@ -111,7 +114,7 @@
 <body>
 <div class="app">
   <header>
-    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.17</div></div>
+    <div><h1>Gavvas Astro Analyzer</h1><div class="sub">Mobile Astro-Wetter · Standortanalyse · v1.7.19</div></div>
     <button id="locateBtn" class="iconBtn ghost" title="Mein Standort">⌖</button>
   </header>
 
@@ -247,6 +250,30 @@
     maxZoom:19,
     attribution:'&copy; OpenStreetMap-Mitwirkende', className:'night-map-tiles'
   }).addTo(map);
+  const satelliteCloudLayer=L.tileLayer.wms('https://view.eumetsat.int/geoserver/wms',{
+    layers:'msg_fes:ir108',
+    format:'image/png',
+    transparent:true,
+    version:'1.3.0',
+    opacity:0.56,
+    zIndex:320,
+    crs:L.CRS.EPSG3857,
+    uppercase:true,
+    attribution:'Satellitenbild: EUMETSAT / Meteosat'
+  }).addTo(map);
+  const cloudControl=L.control({position:'topleft'});
+  cloudControl.onAdd=()=>{
+    const box=L.DomUtil.create('div','mapCloudBadge');
+    box.id='mapCloudBadge';
+    box.innerHTML='<div class="cloudMain">☁ Bewölkung: –</div><div class="cloudNote">EUMETSAT-Satellitenbild wird geladen</div>';
+    L.DomEvent.disableClickPropagation(box);
+    return box;
+  };
+  cloudControl.addTo(map);
+  satelliteCloudLayer.on('tileerror',()=>{
+    const note=document.querySelector('#mapCloudBadge .cloudNote');
+    if(note) note.textContent='Satellitenbild derzeit nicht erreichbar';
+  });
   const marker = L.marker([state.lat,state.lon], {draggable:true}).addTo(map);
   const issIcon = L.divIcon({className:'', html:'<div style="font-size:24px;filter:drop-shadow(0 2px 3px #000)">🛰️</div>', iconSize:[28,28], iconAnchor:[14,14]});
 
@@ -265,6 +292,15 @@
   function weatherLabel(code){
     const m={0:'Klar',1:'Überwiegend klar',2:'Teilweise bewölkt',3:'Bedeckt',45:'Nebel',48:'Reifnebel',51:'Leichter Niesel',53:'Niesel',55:'Starker Niesel',61:'Leichter Regen',63:'Regen',65:'Starker Regen',71:'Leichter Schnee',73:'Schnee',75:'Starker Schnee',80:'Regenschauer',81:'Schauer',82:'Starke Schauer',95:'Gewitter',96:'Gewitter/Hagel',99:'Starkes Gewitter'};
     return m[code] || 'Wettercode '+code;
+  }
+
+  function cloudSymbol(percent){
+    const value=Number(percent);
+    if(!Number.isFinite(value)) return '☁';
+    if(value<15) return '☀';
+    if(value<45) return '🌤';
+    if(value<75) return '⛅';
+    return '☁';
   }
 
   function moonPhaseName(phase){
@@ -420,7 +456,13 @@
   }
   function markDataUpdated(){
     $('lastRefresh').textContent=formatRefreshTime(new Date());
+    refreshSatelliteClouds();
     scheduleNextRefresh();
+  }
+
+  function refreshSatelliteClouds(){
+    satelliteCloudLayer.setParams({_cacheBust:Math.floor(Date.now()/600000)},false);
+    satelliteCloudLayer.redraw();
   }
 
   let refreshRunning=false;
@@ -750,7 +792,8 @@
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=${cur}&hourly=${vars}&timezone=${encodeURIComponent(tz)}&forecast_days=8`;
     const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error('Open-Meteo '+r.status); const j=await r.json(); state.weather=j;
     if(j.timezone) state.timezone=j.timezone;
-    const c=j.current||{}; $('tempValue').textContent=fmt(c.temperature_2m,1)+' °C'; $('cloudValue').textContent=fmt(c.cloud_cover)+' %'; $('windValue').textContent=fmt(c.wind_speed_10m)+' km/h'; $('humidityText').textContent='Feuchte '+fmt(c.relative_humidity_2m)+' %'; $('weatherText').textContent=weatherLabel(c.weather_code);
+    const c=j.current||{}, cloud=Number(c.cloud_cover), condition=weatherLabel(c.weather_code); $('tempValue').textContent=fmt(c.temperature_2m,1)+' °C'; $('cloudValue').textContent=fmt(cloud)+' %'; $('windValue').textContent=fmt(c.wind_speed_10m)+' km/h'; $('humidityText').textContent='Feuchte '+fmt(c.relative_humidity_2m)+' %'; $('weatherText').textContent=condition;
+    $('mapCloudBadge').innerHTML=`<div class="cloudMain">${cloudSymbol(cloud)} Bewölkung: ${fmt(cloud)} %</div><div class="cloudNote">EUMETSAT Infrarot · aktuelle Wolkenverteilung</div>`;
     updateDewWarning(c.temperature_2m,c.dew_point_2m); updateMoonAltitude(); $('updated').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); renderHourly(); renderSevenDays();
   }
 
@@ -1114,7 +1157,7 @@
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=1.7.17').catch(err => console.warn('Service Worker:', err));
+      navigator.serviceWorker.register('./sw.js?v=1.7.19').catch(err => console.warn('Service Worker:', err));
     });
   }
 

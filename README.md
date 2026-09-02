@@ -1,4 +1,17 @@
-# Gavvas Astro Analyzer 1.7.17 – Android / iPhone / iPad
+# Gavvas Astro Analyzer 1.7.19 – Android / iPhone / iPad
+
+## Änderung 1.7.19
+
+- Aktuelle Meteosat-Infrarotbilder werden als halbtransparente Wolkenebene direkt über der Karte angezeigt.
+- Straßen, deutsche Ortsnamen und Standortnadel bleiben über beziehungsweise unter der Wolkenebene erkennbar.
+- Die Satellitenebene wird bei jeder manuellen und automatischen Aktualisierung neu angefordert.
+- Öffentliche EUMETSAT-WMS-Quelle ohne API-Schlüssel.
+
+## Änderung 1.7.18
+
+- Die aktuelle Bewölkung wird direkt innerhalb der Karte angezeigt.
+- Die Kartenanzeige enthält Wolkensymbol, Prozentwert und Wetterzustand.
+- Die Bewölkungsanzeige wird bei jeder Aktualisierung erneuert und benötigt keinen API-Schlüssel.
 
 ## Änderung 1.7.17
 
